@@ -14,7 +14,7 @@ study = StudyDefinition(
         """
         registered AND
         (NOT died) AND
-        (sex = "M" OR sex = "M") AND
+        (sex = "M" OR sex = "F") AND
         (age >= 18 AND age <= 110) AND
         (region != "")
         """,
