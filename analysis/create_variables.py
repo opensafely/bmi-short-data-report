@@ -11,8 +11,8 @@ clinical_variables = dict(
     # ----
     # BMI
     # ----
-    # Default values in OS - note that these are in inverted order as starting from most recent
-    default_bmi_1=patients.most_recent_bmi(
+    # BMI using OpenSAFELY algorithm
+    derived_bmi_1=patients.most_recent_bmi(
         between=[f"{index_date}", f"{end_date}"],
         minimum_age_at_measurement=18,
         include_measurement_date=True,
@@ -24,8 +24,8 @@ clinical_variables = dict(
         }
     ),
     **{
-        f"default_bmi_{n}": patients.most_recent_bmi(
-            between=[index_date, f"default_bmi_{n-1}_date_measured - 1 day"],
+        f"derived_bmi_{n}": patients.most_recent_bmi(
+            between=[index_date, f"derived_bmi_{n-1}_date_measured - 1 day"],
             minimum_age_at_measurement=18,
             include_measurement_date=True,
             date_format="YYYY-MM-DD",
@@ -37,11 +37,11 @@ clinical_variables = dict(
         )
         for n in range(2, 30)
     },
-    # Recorded
+    # Recorded BMI (coded values)
     recorded_bmi_1_date=patients.with_these_clinical_events(
         bmi_code_ctv3,
-        on_or_after=f"{index_date}",
-        find_first_match_in_period=True,
+        between=[f"{index_date}", f"{end_date}"],
+        find_last_match_in_period=True,
         returning="date",
         date_format="YYYY-MM-DD",
         return_expectations={
@@ -52,8 +52,8 @@ clinical_variables = dict(
     **{
         f"recorded_bmi_{n}_date": patients.with_these_clinical_events(
             bmi_code_ctv3,
-            on_or_after=f"recorded_bmi_{n-1}_date + 1 day",
-            find_first_match_in_period=True,
+            between=[index_date, f"recorded_bmi_{n-1}_date - 1 day"],
+            find_last_match_in_period=True,
             returning="date",
             date_format="YYYY-MM-DD",
             return_expectations={
@@ -65,8 +65,8 @@ clinical_variables = dict(
     },
     recorded_bmi_1_value=patients.with_these_clinical_events(
         bmi_code_ctv3,
-        on_or_after=f"{index_date}",
-        find_first_match_in_period=True,
+        between=[f"{index_date}", f"{end_date}"],
+        find_last_match_in_period=True,
         returning="numeric_value",
         return_expectations={
             "incidence": 0.7,
@@ -76,8 +76,8 @@ clinical_variables = dict(
     **{
         f"recorded_bmi_{n}_value": patients.with_these_clinical_events(
             bmi_code_ctv3,
-            on_or_after=f"recorded_bmi_{n-1}_date + 1 day",
-            find_first_match_in_period=True,
+            between=[index_date, f"recorded_bmi_{n-1}_date - 1 day"],
+            find_last_match_in_period=True,
             returning="numeric_value",
             return_expectations={
                 "incidence": 0.7,
@@ -89,8 +89,8 @@ clinical_variables = dict(
     # Weight
     weight_1_date=patients.with_these_clinical_events(
         weight_codes_ctv3,
-        on_or_after=f"{index_date}",
-        find_first_match_in_period=True,
+        between=[f"{index_date}", f"{end_date}"],
+        find_last_match_in_period=True,
         returning="date",
         date_format="YYYY-MM-DD",
         return_expectations={
@@ -101,8 +101,8 @@ clinical_variables = dict(
     **{
         f"weight_{n}_date": patients.with_these_clinical_events(
             weight_codes_ctv3,
-            on_or_after=f"weight_{n-1}_date + 1 day",
-            find_first_match_in_period=True,
+            between=[index_date, f"weight_{n-1}_date - 1 day"],
+            find_last_match_in_period=True,
             returning="date",
             date_format="YYYY-MM-DD",
             return_expectations={
@@ -114,8 +114,8 @@ clinical_variables = dict(
     },
     weight_1_value=patients.with_these_clinical_events(
         weight_codes_ctv3,
-        on_or_after=f"{index_date}",
-        find_first_match_in_period=True,
+        between=[f"{index_date}", f"{end_date}"],
+        find_last_match_in_period=True,
         returning="numeric_value",
         return_expectations={
             "incidence": 0.7,
@@ -125,8 +125,8 @@ clinical_variables = dict(
     **{
         f"weight_{n}_value": patients.with_these_clinical_events(
             weight_codes_ctv3,
-            on_or_after=f"weight_{n-1}_date + 1 day",
-            find_first_match_in_period=True,
+            between=[index_date, f"weight_{n-1}_date - 1 day"],
+            find_last_match_in_period=True,
             returning="numeric_value",
             return_expectations={
                 "incidence": 0.7,
@@ -138,8 +138,8 @@ clinical_variables = dict(
     # Height
     height_1_date=patients.with_these_clinical_events(
         height_codes_ctv3,
-        on_or_after=f"{index_date}",
-        find_first_match_in_period=True,
+        between=[f"{index_date}", f"{end_date}"],
+        find_last_match_in_period=True,
         returning="date",
         date_format="YYYY-MM-DD",
         return_expectations={
@@ -150,8 +150,8 @@ clinical_variables = dict(
     **{
         f"height_{n}_date": patients.with_these_clinical_events(
             height_codes_ctv3,
-            on_or_after=f"height_{n-1}_date + 1 day",
-            find_first_match_in_period=True,
+            between=[index_date, f"height_{n-1}_date - 1 day"],
+            find_last_match_in_period=True,
             returning="date",
             date_format="YYYY-MM-DD",
             return_expectations={
@@ -163,8 +163,8 @@ clinical_variables = dict(
     },
     height_1_value=patients.with_these_clinical_events(
         height_codes_ctv3,
-        on_or_after=f"{index_date}",
-        find_first_match_in_period=True,
+        between=[f"{index_date}", f"{end_date}"],
+        find_last_match_in_period=True,
         returning="numeric_value",
         return_expectations={
             "incidence": 0.7,
@@ -174,8 +174,8 @@ clinical_variables = dict(
     **{
         f"height_{n}_value": patients.with_these_clinical_events(
             weight_codes_ctv3,
-            on_or_after=f"height_{n-1}_date + 1 day",
-            find_first_match_in_period=True,
+            between=[index_date, f"height_{n-1}_date - 1 day"],
+            find_last_match_in_period=True,
             returning="numeric_value",
             return_expectations={
                 "incidence": 0.7,
