@@ -1,7 +1,6 @@
 opensafely/ethnicity/2020-04-27
+primis-covid19-vacc-uptake/bmi/v1/
 primis-covid19-vacc-uptake/eth2001/v1
-primis-covid19-vacc-uptake/non_eth2001/v1
-primis-covid19-vacc-uptake/eth_notgiptref/v1
-primis-covid19-vacc-uptake/eth_notstated/v1
-primis-covid19-vacc-uptake/eth_norecord/v1
 primis-covid19-vacc-uptake/learndis/v1
+opensafely/height-snomed/3b4a3891/
+opensafely/weight-snomed/5459abc6/

@@ -6,41 +6,35 @@
       "downloaded_at": "2022-01-28 16:31:51.648214Z",
       "sha": "3d2f3998b71863a80b24d60f6f4282e14191ae13"
     },
+    "primis-covid19-vacc-uptake-bmi.csv": {
+      "id": "primis-covid19-vacc-uptake/bmi/v1",
+      "url": "https://codelists.opensafely.org/codelist/primis-covid19-vacc-uptake/bmi/v1/",
+      "downloaded_at": "2022-02-03 14:22:53.605232Z",
+      "sha": "6e96c04ee1a647905be2b410fa2c33d770576bf0"
+    },
     "primis-covid19-vacc-uptake-eth2001.csv": {
       "id": "primis-covid19-vacc-uptake/eth2001/v1",
       "url": "https://codelists.opensafely.org/codelist/primis-covid19-vacc-uptake/eth2001/v1/",
       "downloaded_at": "2022-01-24 12:23:39.554610Z",
       "sha": "36e4eacba898e6ec72da8ff66e8c673bfd9aa8e4"
     },
-    "primis-covid19-vacc-uptake-non_eth2001.csv": {
-      "id": "primis-covid19-vacc-uptake/non_eth2001/v1",
-      "url": "https://codelists.opensafely.org/codelist/primis-covid19-vacc-uptake/non_eth2001/v1/",
-      "downloaded_at": "2022-01-24 12:23:39.775211Z",
-      "sha": "b8581424b9305f70148f1bbccc0d3e4703847df7"
-    },
-    "primis-covid19-vacc-uptake-eth_notgiptref.csv": {
-      "id": "primis-covid19-vacc-uptake/eth_notgiptref/v1",
-      "url": "https://codelists.opensafely.org/codelist/primis-covid19-vacc-uptake/eth_notgiptref/v1/",
-      "downloaded_at": "2022-01-24 12:23:39.964809Z",
-      "sha": "6245c85e4bd44c0c3aa573325cf55891efee45db"
-    },
-    "primis-covid19-vacc-uptake-eth_notstated.csv": {
-      "id": "primis-covid19-vacc-uptake/eth_notstated/v1",
-      "url": "https://codelists.opensafely.org/codelist/primis-covid19-vacc-uptake/eth_notstated/v1/",
-      "downloaded_at": "2022-01-24 12:23:40.117063Z",
-      "sha": "a8997e1807a07d8f56e34ba3d0b95ee0082fec82"
-    },
-    "primis-covid19-vacc-uptake-eth_norecord.csv": {
-      "id": "primis-covid19-vacc-uptake/eth_norecord/v1",
-      "url": "https://codelists.opensafely.org/codelist/primis-covid19-vacc-uptake/eth_norecord/v1/",
-      "downloaded_at": "2022-01-24 12:23:40.295676Z",
-      "sha": "ca003bb021a14e704a6e81c139536ef459673da4"
-    },
     "primis-covid19-vacc-uptake-learndis.csv": {
       "id": "primis-covid19-vacc-uptake/learndis/v1",
       "url": "https://codelists.opensafely.org/codelist/primis-covid19-vacc-uptake/learndis/v1/",
       "downloaded_at": "2022-01-24 12:23:40.560551Z",
       "sha": "41f81fcb9fadb082a77cadd6cf60614d7c8d860f"
+    },
+    "opensafely-height-snomed.csv": {
+      "id": "opensafely/height-snomed/3b4a3891",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/height-snomed/3b4a3891/",
+      "downloaded_at": "2022-02-03 14:51:03.635593Z",
+      "sha": "22988f25528e7ebcbcd079afe54c39c883bcf63c"
+    },
+    "opensafely-weight-snomed.csv": {
+      "id": "opensafely/weight-snomed/5459abc6",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/weight-snomed/5459abc6/",
+      "downloaded_at": "2022-02-03 14:51:03.808818Z",
+      "sha": "66c5fa2b4fc41bd55982e97ba2a30b148136b2dd"
     }
   }
 }
