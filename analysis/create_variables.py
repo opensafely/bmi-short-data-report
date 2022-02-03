@@ -11,7 +11,7 @@ clinical_variables = dict(
     # ----
     # BMI
     # ----
-    # BMI using OpenSAFELY algorithm
+    # BMI using OpenSAFELY algorithm - returns latest in period
     derived_bmi_1=patients.most_recent_bmi(
         between=[f"{index_date}", f"{end_date}"],
         minimum_age_at_measurement=18,
@@ -20,7 +20,7 @@ clinical_variables = dict(
         return_expectations={
             "date": {"earliest": "2010-02-01", "latest": "2020-01-31"},
             "float": {"distribution": "normal", "mean": 28, "stddev": 8},
-            "incidence": 0.80,
+            "incidence": 0.8,
         }
     ),
     **{
@@ -32,153 +32,90 @@ clinical_variables = dict(
             return_expectations={
                 "date": {"earliest": "2010-02-01", "latest": "2020-01-31"},
                 "float": {"distribution": "normal", "mean": 28, "stddev": 8},
-                "incidence": 0.80,
+                "incidence": 0.8,
             },
         )
         for n in range(2, 30)
     },
     # Recorded BMI (coded values)
-    recorded_bmi_1_date=patients.with_these_clinical_events(
-        bmi_code_ctv3,
+    recorded_bmi_1=patients.with_these_clinical_events(
+        bmi_code_snomed,
         between=[f"{index_date}", f"{end_date}"],
         find_last_match_in_period=True,
-        returning="date",
+        include_date_of_match=True,
         date_format="YYYY-MM-DD",
-        return_expectations={
-            "incidence": 0.7,
-            "date": {"earliest": "index_date"},
-        },
-    ),
-    **{
-        f"recorded_bmi_{n}_date": patients.with_these_clinical_events(
-            bmi_code_ctv3,
-            between=[index_date, f"recorded_bmi_{n-1}_date - 1 day"],
-            find_last_match_in_period=True,
-            returning="date",
-            date_format="YYYY-MM-DD",
-            return_expectations={
-                "incidence": 0.7,
-                "date": {"earliest": "index_date"},
-            },
-        )
-        for n in range(2, 30)
-    },
-    recorded_bmi_1_value=patients.with_these_clinical_events(
-        bmi_code_ctv3,
-        between=[f"{index_date}", f"{end_date}"],
-        find_last_match_in_period=True,
         returning="numeric_value",
         return_expectations={
-            "incidence": 0.7,
+            "incidence": 0.8,
             "float": {"distribution": "normal", "mean": 22.0, "stddev": 4},
         },
     ),
     **{
-        f"recorded_bmi_{n}_value": patients.with_these_clinical_events(
-            bmi_code_ctv3,
+        f"recorded_bmi_{n}": patients.with_these_clinical_events(
+            bmi_code_snomed,
             between=[index_date, f"recorded_bmi_{n-1}_date - 1 day"],
             find_last_match_in_period=True,
+            include_date_of_match=True,
+            date_format="YYYY-MM-DD",
             returning="numeric_value",
             return_expectations={
-                "incidence": 0.7,
+                "incidence": 0.8,
                 "float": {"distribution": "normal", "mean": 22.0, "stddev": 4},
             },
         )
         for n in range(2, 30)
     },
     # Weight
-    weight_1_date=patients.with_these_clinical_events(
-        weight_codes_ctv3,
+    weight_1=patients.with_these_clinical_events(
+        weight_codes_snomed,
         between=[f"{index_date}", f"{end_date}"],
         find_last_match_in_period=True,
-        returning="date",
+        include_date_of_match=True,
         date_format="YYYY-MM-DD",
-        return_expectations={
-            "incidence": 0.7,
-            "date": {"earliest": "index_date"},
-        },
-    ),
-    **{
-        f"weight_{n}_date": patients.with_these_clinical_events(
-            weight_codes_ctv3,
-            between=[index_date, f"weight_{n-1}_date - 1 day"],
-            find_last_match_in_period=True,
-            returning="date",
-            date_format="YYYY-MM-DD",
-            return_expectations={
-                "incidence": 0.7,
-                "date": {"earliest": "index_date"},
-            },
-        )
-        for n in range(2, 30)
-    },
-    weight_1_value=patients.with_these_clinical_events(
-        weight_codes_ctv3,
-        between=[f"{index_date}", f"{end_date}"],
-        find_last_match_in_period=True,
         returning="numeric_value",
         return_expectations={
-            "incidence": 0.7,
+            "incidence": 0.8,
             "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
         },
     ),
     **{
-        f"weight_{n}_value": patients.with_these_clinical_events(
-            weight_codes_ctv3,
+        f"weight_{n}": patients.with_these_clinical_events(
+            weight_codes_snomed,
             between=[index_date, f"weight_{n-1}_date - 1 day"],
             find_last_match_in_period=True,
+            include_date_of_match=True,
+            date_format="YYYY-MM-DD",
             returning="numeric_value",
             return_expectations={
-                "incidence": 0.7,
+                "incidence": 0.8,
                 "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
             },
         )
         for n in range(2, 30)
     },
     # Height
-    height_1_date=patients.with_these_clinical_events(
-        height_codes_ctv3,
+    height_1=patients.with_these_clinical_events(
+        height_codes_snomed,
         between=[f"{index_date}", f"{end_date}"],
         find_last_match_in_period=True,
-        returning="date",
+        include_date_of_match=True,
         date_format="YYYY-MM-DD",
-        return_expectations={
-            "incidence": 0.7,
-            "date": {"earliest": "index_date"},
-        },
-    ),
-    **{
-        f"height_{n}_date": patients.with_these_clinical_events(
-            height_codes_ctv3,
-            between=[index_date, f"height_{n-1}_date - 1 day"],
-            find_last_match_in_period=True,
-            returning="date",
-            date_format="YYYY-MM-DD",
-            return_expectations={
-                "incidence": 0.7,
-                "date": {"earliest": "index_date"},
-            },
-        )
-        for n in range(2, 30)
-    },
-    height_1_value=patients.with_these_clinical_events(
-        height_codes_ctv3,
-        between=[f"{index_date}", f"{end_date}"],
-        find_last_match_in_period=True,
         returning="numeric_value",
         return_expectations={
-            "incidence": 0.7,
+            "incidence": 0.8,
             "float": {"distribution": "normal", "mean": 1.65, "stddev": 0.06},
         },
     ),
     **{
-        f"height_{n}_value": patients.with_these_clinical_events(
-            weight_codes_ctv3,
+        f"height_{n}": patients.with_these_clinical_events(
+            weight_codes_snomed,
             between=[index_date, f"height_{n-1}_date - 1 day"],
             find_last_match_in_period=True,
+            include_date_of_match=True,
+            date_format="YYYY-MM-DD",
             returning="numeric_value",
             return_expectations={
-                "incidence": 0.7,
+                "incidence": 0.8,
                 "float": {"distribution": "normal", "mean": 1.65, "stddev": 0.06},
             },
         )
@@ -254,64 +191,26 @@ demographic_variables = dict(
         }
     ),
     # Ethnicity
-    ethnicity=patients.categorised_as(
-        {
-            "0": "DEFAULT",
-            "1": "eth='1' OR (NOT eth AND ethnicity_sus='1')",
-            "2": "eth='2' OR (NOT eth AND ethnicity_sus='2')",
-            "3": "eth='3' OR (NOT eth AND ethnicity_sus='3')",
-            "4": "eth='4' OR (NOT eth AND ethnicity_sus='4')",
-            "5": "eth='5' OR (NOT eth AND ethnicity_sus='5')",
-        },
+    ethnicity=patients.with_these_clinical_events(
+        ethnicity_snomed,
+        returning="category",
+        find_last_match_in_period=True,
+        on_or_before="index_date",
         return_expectations={
             "category": {
                 "ratios": {
-                    "1": 0.2,
-                    "2": 0.2,
-                    "3": 0.2,
-                    "4": 0.2,
-                    "5": 0.2
+                    "1": 0.5,
+                    "2": 0.25,
+                    "3": 0.125,
+                    "4": 0.0625,
+                    "5": 0.03125,
+                    "6": 0.015625,
+                    "7": 0.0078125,
+                    "8": 0.0078125,
                 }
             },
-            "incidence": 0.4,
+            "rate": "universal",
         },
-
-        eth=patients.with_these_clinical_events(
-            ethnicity_codes,
-            returning="category",
-            find_last_match_in_period=True,
-            include_date_of_match=False,
-            return_expectations={
-                "category": {
-                    "ratios": {
-                        "1": 0.2,
-                        "2": 0.2,
-                        "3": 0.2,
-                        "4": 0.2,
-                        "5": 0.2
-                    }
-                },
-                "incidence": 0.75,
-            },
-        ),
-
-        # fill missing ethnicity from SUS
-        ethnicity_sus=patients.with_ethnicity_from_sus(
-            returning="group_6",
-            use_most_frequent_code=True,
-            return_expectations={
-                "category": {
-                    "ratios": {
-                        "1": 0.2,
-                        "2": 0.2,
-                        "3": 0.2,
-                        "4": 0.2,
-                        "5": 0.2
-                    }
-                },
-                "incidence": 0.4,
-            },
-        ),
     ),
     # Practice
     practice=patients.registered_practice_as_of(
@@ -355,59 +254,3 @@ demographic_variables = dict(
         },
     ),
 )
-
-# # SNOMED codes for ethnicity
-# # Main
-# eth2001=patients.with_these_clinical_events(
-#     codelists.eth2001,
-#     returning="category",
-#     find_last_match_in_period=True,
-#     on_or_before="index_date",
-#     return_expectations={
-#         "category": {
-#             "ratios": {
-#                 "1": 0.5,
-#                 "2": 0.25,
-#                 "3": 0.125,
-#                 "4": 0.0625,
-#                 "5": 0.03125,
-#                 "6": 0.015625,
-#                 "7": 0.0078125,
-#                 "8": 0.0078125,
-#             }
-#         },
-#         "rate": "universal",
-#     },
-# ),
-# # Any other ethnicity code
-# non_eth2001_dat=patients.with_these_clinical_events(
-#     codelists.non_eth2001,
-#     returning="date",
-#     find_last_match_in_period=True,
-#     on_or_before="index_date",
-#     date_format="YYYY-MM-DD",
-# ),
-# # Ethnicity not given - patient refused
-# eth_notgiptref_dat=patients.with_these_clinical_events(
-#     codelists.eth_notgiptref,
-#     returning="date",
-#     find_last_match_in_period=True,
-#     on_or_before="index_date",
-#     date_format="YYYY-MM-DD",
-# ),
-# # Ethnicity not stated
-# eth_notstated_dat=patients.with_these_clinical_events(
-#     codelists.eth_notstated,
-#     returning="date",
-#     find_last_match_in_period=True,
-#     on_or_before="index_date",
-#     date_format="YYYY-MM-DD",
-# ),
-# # Ethnicity no record
-# eth_norecord_dat=patients.with_these_clinical_events(
-#     codelists.eth_norecord,
-#     returning="date",
-#     find_last_match_in_period=True,
-#     on_or_before="index_date",
-#     date_format="YYYY-MM-DD",
-# ),
