@@ -6,7 +6,7 @@ from codelists import *
 study = StudyDefinition(
     index_date=start_date,
     default_expectations={
-        "date": {"earliest": start_date, "latest": end_date},
+        "date": {"earliest": "index_date", "latest": "last_day_of_month(index_date)"},
         "rate": "uniform",
         "incidence": 0.65,
     },
