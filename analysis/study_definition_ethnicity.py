@@ -2,7 +2,6 @@ from cohortextractor import (
     StudyDefinition,
     patients,
 )
-from config import end_date
 
 from codelists import ethnicity_snomed
 
@@ -11,7 +10,7 @@ study = StudyDefinition(
         "date": {"earliest": "1900-01-01", "latest": "today"},
         "rate": "uniform",
     },
-    index_date=end_date,
+    index_date="2021-12-31",
     population=patients.all(),
     # Ethnicity
     ethnicity=patients.with_these_clinical_events(
