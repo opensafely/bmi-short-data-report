@@ -123,91 +123,91 @@ clinical_variables = dict(
     # Chronic cardiac disease
     chronic_cardiac_disease=patients.with_these_clinical_events(
         chronic_cardiac_dis_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Chronic kidney disease
     chronic_kidney_disease=patients.with_these_clinical_events(
         chronic_kidney_dis_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Chronic liver disease
     chronic_liver_disease=patients.with_these_clinical_events(
         chronic_liver_dis_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Chronic respiratory disease
     chronic_respiratory_disease=patients.with_these_clinical_events(
         chronic_respiratory_dis_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Cancer (Haemotological)
     cancer_haem=patients.with_these_clinical_events(
         cancer_haem_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Cancer (Lung)
     cancer_lung=patients.with_these_clinical_events(
         cancer_lung_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Cancer (Other)
     cancer_other=patients.with_these_clinical_events(
         cancer_other_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Dementia
     dementia=patients.with_these_clinical_events(
         dementia_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Diabetes
     diabetes=patients.with_these_clinical_events(
         diabetes_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Housebound
     housebound=patients.with_these_clinical_events(
         housebound_codes,
-        between=["index_date - 1 year", "index_date"],
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Hypertension
     hypertension=patients.with_these_clinical_events(
         hypertension_codes,
-        between=["index_date - 1 year", "index_date"],
+        between=["index_date - 2 years", "index_date - 1 day"],
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Learning disability
     learning_disability=patients.with_these_clinical_events(
         wider_ld_codes,
-        on_or_before="index_date",
+        on_or_before="index_date - 1 day",
         returning="binary_flag",
         return_expectations={"incidence": 0.01, },
     ),
     # Severe obesity
     sev_obesity=patients.with_these_clinical_events(
         sev_obesity_codes,
-        between=["index_date - 1 year", "index_date"],
+        between=["index_date - 2 years", "index_date - 1 day"],
         returning="date",
         date_format="YYYY-MM-DD",
         find_last_match_in_period=True,
