@@ -10,6 +10,7 @@ study = StudyDefinition(
         "date": {"earliest": "1900-01-01", "latest": "today"},
         "rate": "uniform",
     },
+    # End of the study period
     index_date="2021-12-31",
     population=patients.all(),
     # Ethnicity
