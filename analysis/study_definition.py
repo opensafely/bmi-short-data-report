@@ -13,7 +13,7 @@ study = StudyDefinition(
         """
         registered AND
         (sex = "M" OR sex = "F") AND
-        (age >= 18 AND age <= 110) AND
+        (age >= 18 AND age <= 110)
         """,
         # Looking at registered patients yearly
         registered=patients.registered_with_one_practice_between(
