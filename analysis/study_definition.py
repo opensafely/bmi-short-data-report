@@ -5,7 +5,7 @@ from codelists import *
 study = StudyDefinition(
     index_date="2015-01-01",
     default_expectations={
-        "date": {"earliest": "index_date", "latest": "index_date + 1 year"},
+        "date": {"earliest": "index_date", "latest": "last_day_of_month(index_date)"},
         "rate": "uniform",
         "incidence": 0.65,
     },
@@ -17,7 +17,7 @@ study = StudyDefinition(
         """,
         # Looking at registered patients yearly
         registered=patients.registered_with_one_practice_between(
-            "index_date", "index_date + 1 year",
+            "index_date", "last_day_of_month(index_date)",
             return_expectations={"incidence": 0.9},
         )
     ),

@@ -2,16 +2,16 @@ from cohortextractor import (
     patients,
 )
 from codelists import *
+from datetime import date, timedelta
 
 clinical_variables = dict(
     # ----
     # BMI
     # ----
     # BMI using OpenSAFELY algorithm - returns latest in period
-    derived_bmi_1=patients.most_recent_bmi(
-        between=["index_date", "index_date + 1 months"],
+    derived_bmi=patients.most_recent_bmi(
+        between=["index_date", "last_day_of_month(index_date)"],
         minimum_age_at_measurement=18,
-        include_measurement_date=True,
         date_format="YYYY-MM-DD",
         return_expectations={
             "date": {"earliest": "index_date", "latest": "last_day_of_month(index_date)"},
@@ -19,26 +19,24 @@ clinical_variables = dict(
             "incidence": 0.8,
         }
     ),
-    **{
-        f"derived_bmi_{n+1}": patients.most_recent_bmi(
-            between=[f"index_date + {n} months", f"index_date + {n+1} months"],
-            minimum_age_at_measurement=18,
-            include_measurement_date=True,
-            date_format="YYYY-MM-DD",
-            return_expectations={
-                "date": {"earliest": f"index_date + {n} months", "latest": f"index_date + {n+1} months"},
-                "float": {"distribution": "normal", "mean": 28, "stddev": 8},
-                "incidence": 0.8,
-            },
-        )
-        for n in range(1, 12)
-    },
+    # **{
+    #     f"derived_bmi_{n+1}": patients.most_recent_bmi(
+    #         between=[f"index_date + {n} months", f"index_date + {n+1} months"],
+    #         minimum_age_at_measurement=18,
+    #         date_format="YYYY-MM-DD",
+    #         return_expectations={
+    #             "date": {"earliest": f"index_date + {n} months", "latest": f"index_date + {n+1} months"},
+    #             "float": {"distribution": "normal", "mean": 28, "stddev": 8},
+    #             "incidence": 0.8,
+    #         },
+    #     )
+    #     for n in range(1, 12)
+    # },
     # Recorded BMI (coded values)
-    recorded_bmi_1=patients.with_these_clinical_events(
+    recorded_bmi=patients.with_these_clinical_events(
         bmi_code_snomed,
-        between=["index_date", "index_date + 1 months"],
+        between=["index_date", "last_day_of_month(index_date)"],
         find_last_match_in_period=True,
-        include_date_of_match=True,
         date_format="YYYY-MM-DD",
         returning="numeric_value",
         return_expectations={
@@ -46,27 +44,25 @@ clinical_variables = dict(
             "float": {"distribution": "normal", "mean": 22.0, "stddev": 4},
         },
     ),
-    **{
-        f"recorded_bmi_{n+1}": patients.with_these_clinical_events(
-            bmi_code_snomed,
-            between=[f"index_date + {n} months", f"index_date + {n+1} months"],
-            find_last_match_in_period=True,
-            include_date_of_match=True,
-            date_format="YYYY-MM-DD",
-            returning="numeric_value",
-            return_expectations={
-                "incidence": 0.8,
-                "float": {"distribution": "normal", "mean": 22.0, "stddev": 4},
-            },
-        )
-        for n in range(1, 12)
-    },
+    # **{
+    #     f"recorded_bmi_{n+1}": patients.with_these_clinical_events(
+    #         bmi_code_snomed,
+    #         between=[f"index_date + {n} months", f"index_date + {n+1} months"],
+    #         find_last_match_in_period=True,
+    #         date_format="YYYY-MM-DD",
+    #         returning="numeric_value",
+    #         return_expectations={
+    #             "incidence": 0.8,
+    #             "float": {"distribution": "normal", "mean": 22.0, "stddev": 4},
+    #         },
+    #     )
+    #     for n in range(1, 12)
+    # },
     # Weight
-    weight_1=patients.with_these_clinical_events(
+    weight=patients.with_these_clinical_events(
         weight_codes_snomed,
-        between=["index_date", "index_date + 1 months"],
+        between=["index_date", "last_day_of_month(index_date)"],
         find_last_match_in_period=True,
-        include_date_of_match=True,
         date_format="YYYY-MM-DD",
         returning="numeric_value",
         return_expectations={
@@ -74,27 +70,25 @@ clinical_variables = dict(
             "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
         },
     ),
-    **{
-        f"weight_{n+1}": patients.with_these_clinical_events(
-            weight_codes_snomed,
-            between=[f"index_date + {n} months", f"index_date + {n+1} months"],
-            find_last_match_in_period=True,
-            include_date_of_match=True,
-            date_format="YYYY-MM-DD",
-            returning="numeric_value",
-            return_expectations={
-                "incidence": 0.8,
-                "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
-            },
-        )
-        for n in range(1, 12)
-    },
+    # **{
+    #     f"weight_{n+1}": patients.with_these_clinical_events(
+    #         weight_codes_snomed,
+    #         between=[f"index_date + {n} months", f"index_date + {n+1} months"],
+    #         find_last_match_in_period=True,
+    #         date_format="YYYY-MM-DD",
+    #         returning="numeric_value",
+    #         return_expectations={
+    #             "incidence": 0.8,
+    #             "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
+    #         },
+    #     )
+    #     for n in range(1, 12)
+    # },
     # Height
-    height_1=patients.with_these_clinical_events(
+    height=patients.with_these_clinical_events(
         height_codes_snomed,
-        between=["index_date", "index_date + 1 months"],
+        between=["index_date", "last_day_of_month(index_date)"],
         find_last_match_in_period=True,
-        include_date_of_match=True,
         date_format="YYYY-MM-DD",
         returning="numeric_value",
         return_expectations={
@@ -102,21 +96,20 @@ clinical_variables = dict(
             "float": {"distribution": "normal", "mean": 1.65, "stddev": 0.06},
         },
     ),
-    **{
-        f"height_{n+1}": patients.with_these_clinical_events(
-            weight_codes_snomed,
-            between=[f"index_date + {n} months", f"index_date + {n+1} months"],
-            find_last_match_in_period=True,
-            include_date_of_match=True,
-            date_format="YYYY-MM-DD",
-            returning="numeric_value",
-            return_expectations={
-                "incidence": 0.8,
-                "float": {"distribution": "normal", "mean": 1.65, "stddev": 0.06},
-            },
-        )
-        for n in range(1, 12)
-    },
+    # **{
+    #     f"height_{n+1}": patients.with_these_clinical_events(
+    #         weight_codes_snomed,
+    #         between=[f"index_date + {n} months", f"index_date + {n+1} months"],
+    #         find_last_match_in_period=True,
+    #         date_format="YYYY-MM-DD",
+    #         returning="numeric_value",
+    #         return_expectations={
+    #             "incidence": 0.8,
+    #             "float": {"distribution": "normal", "mean": 1.65, "stddev": 0.06},
+    #         },
+    #     )
+    #     for n in range(1, 12)
+    # },
     # -------------------
     # Clinical conditions
     # -------------------
