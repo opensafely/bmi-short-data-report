@@ -85,7 +85,8 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
     for definition in definitions:
         df_all_redact[definition+'_pct'] = round((df_all_redact[definition+suffix].div(df_all_redact[definition+suffix][0]))*100,1)
 
-    df_all_redact = df_all_redact[['derived_bmi'+suffix,'derived_bmi_pct','computed_bmi'+suffix,'computed_bmi_pct','recorded_bmi'+suffix,'recorded_bmi_pct']]
+    # NEED TO MAKE THIS 
+    df_all_redact = df_all_redact[[definitions[0]+suffix,definitions[0]+'_pct',definitions[1]+suffix,definitions[1]+'_pct',definitions[2]+suffix,definitions[2]+'_pct']]
     df_all_redact = df_all_redact.where(~df_all_redact.isna(), '-')
     return df_all_redact
 
@@ -98,14 +99,18 @@ def display_heatmap(df_clean, definitions):
         df_temp = df_clean[['patient_id', definition+'_filled']].drop_duplicates().dropna().set_index('patient_id')
         li_filled.append(df_temp)
 
+    # Prepare data for heatmap input
     df_temp2 = pd.concat(li_filled, axis=1)
     df_transform = df_temp2.replace(np.nan,0)
     df_dot = df_transform.T.dot(df_transform)
+    
+    # Create mask to eliminate duplicates in heatmap
     mask = np.triu(np.ones_like(df_dot))
+    np.fill_diagonal(mask[::1], 0)
 
     # Draw the heatmap with the mask
     fig, ax = plt.subplots(figsize=(12, 8))
-    sns.heatmap(df_dot, mask=mask, annot=True, fmt='g', cmap="YlGnBu", vmin=0)
+    sns.heatmap(df_dot, annot=True, mask=mask, fmt='g', cmap="YlGnBu", vmin=0)
     plt.show()
 
 def records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates):
