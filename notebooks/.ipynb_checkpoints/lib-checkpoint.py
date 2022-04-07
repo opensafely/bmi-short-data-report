@@ -38,8 +38,10 @@ def import_clean(input_path, definitions, demographic_covariates, clinical_covar
 
 def patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, missing=False):
     suffix = '_filled'
+    subgroup = 'with records'
     if missing == True:
         suffix = '_missing'
+        subgroup = 'missing records'
     # All population
     li_pop = []
     for definition in definitions:
@@ -60,7 +62,7 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
 
     df_temp2 = pd.concat(li_filled, axis=1)
     df_all = pd.DataFrame(df_temp2.sum()).T
-    df_all['group'],df_all['subgroup'] = ['population','with records']
+    df_all['group'],df_all['subgroup'] = ['population',subgroup]
     df_all = df_all.set_index(['group','subgroup'])
 
     # By group
