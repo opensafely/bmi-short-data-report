@@ -85,8 +85,14 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
     for definition in definitions:
         df_all_redact[definition+'_pct'] = round((df_all_redact[definition+suffix].div(df_all_redact[definition+suffix][0]))*100,1)
 
-    # NEED TO MAKE THIS 
-    df_all_redact = df_all_redact[[definitions[0]+suffix,definitions[0]+'_pct',definitions[1]+suffix,definitions[1]+'_pct',definitions[2]+suffix,definitions[2]+'_pct']]
+    # Column order
+    li_col_order = []
+    for definition in definitions:
+        li_col_order.append(definition+suffix)
+        li_col_order.append(definition+'_pct')
+    df_all_redact = df_all_redact[li_col_order]
+    
+    # Final redaction step
     df_all_redact = df_all_redact.where(~df_all_redact.isna(), '-')
     return df_all_redact
 
