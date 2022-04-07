@@ -23,3 +23,17 @@ actions:
     outputs:
       highly_sensitive:
         cohort: output/data/input_20*.feather
+
+  preprocess_inputs:
+    run: python:latest python analysis/preprocess_inputs.py --output-format feather
+    needs: [join_ethnicity_all_patients]
+    outputs:
+      highly_sensitive:
+        cohort_with_duration: output/data/input_all.feather
+
+  generate_report_bmi:
+    run: jupyter:latest jupyter nbconvert /workspace/notebooks/report_bmi.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [preprocess_inputs]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_bmi.html
