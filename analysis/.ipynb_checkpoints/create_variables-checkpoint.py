@@ -34,7 +34,7 @@ clinical_variables = dict(
                 "incidence": 0.80,
             },
         )
-        for n in range(2, 11)
+        for n in range(2, 30)
     },
     # Recorded BMI (coded values)
     recorded_bmi1=patients.with_these_clinical_events(
@@ -62,7 +62,7 @@ clinical_variables = dict(
                 "float": {"distribution": "normal", "mean": 22.0, "stddev": 4},
             },
         )
-        for n in range(2, 11)
+        for n in range(2, 31)
     },
     weight1=patients.with_these_clinical_events(
         weight_codes_snomed,
@@ -89,17 +89,7 @@ clinical_variables = dict(
                 "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
             },
         )
-        for n in range(2, 11)
-    },
-    **{
-        f"weight_age{n}": patients.age_as_of(
-            f"weight{n}_date",
-            return_expectations={
-                "rate" : "universal",
-                "int" : {"distribution" : "population_ages"}
-            }
-        )
-        for n in range(1,11)
+        for n in range(2, 31)
     },
     height1=patients.with_these_clinical_events(
         height_codes_snomed,
@@ -126,17 +116,7 @@ clinical_variables = dict(
                 "float": {"distribution": "normal", "mean": 1.65, "stddev": 0.06},
             },
         )
-        for n in range(2, 11)
-    },
-    **{
-        f"height_age{n}": patients.age_as_of(
-            f"height{n}_date",
-            return_expectations={
-                "rate" : "universal",
-                "int" : {"distribution" : "population_ages"}
-            }
-        )
-        for n in range(1,11)
+        for n in range(2, 31)
     },
     # -------------------
     # Clinical conditions

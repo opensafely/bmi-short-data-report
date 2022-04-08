@@ -6,34 +6,14 @@ expectations:
 actions:
 
   generate_study_population:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition --index-date-range "2019-01-01 to 2019-12-01 by month" --output-dir=output/data --output-format feather
+    run: cohortextractor:latest generate_cohort --study-definition study_definition --output-dir=output/data --output-format feather
     outputs:
       highly_sensitive:
-        cohort: output/data/input*.feather
-
-  generate_study_population_ethnicity:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_ethnicity --output-dir=output/data --output-format feather
-    outputs:
-      highly_sensitive:
-        cohort: output/data/input_ethnicity.feather
-
-  join_ethnicity_all_patients:
-    run: python:latest python analysis/join_ethnicity.py --output-dir=output/data --output-format feather
-    needs: [generate_study_population, generate_study_population_ethnicity]
-    outputs:
-      highly_sensitive:
-        cohort: output/data/input_20*.feather
+        cohort: output/data/input.feather
 
   preprocess_inputs:
     run: python:latest python analysis/preprocess_inputs.py --output-format feather
-    needs: [join_ethnicity_all_patients]
+    needs: [generate_study_population]
     outputs:
       highly_sensitive:
-        cohort_with_duration: output/data/input_all.feather
-
-  generate_report_bmi:
-    run: jupyter:latest jupyter nbconvert /workspace/notebooks/report_bmi.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
-    needs: [preprocess_inputs]
-    outputs:
-      moderately_sensitive:
-        notebook: output/report_bmi.html
+        cohort_with_duration: output/data/input_processed.feather
