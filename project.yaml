@@ -17,3 +17,10 @@ actions:
     outputs:
       highly_sensitive:
         cohort_with_duration: output/data/input_processed.feather
+
+  generate_report_bmi:
+    run: jupyter:latest jupyter nbconvert /workspace/notebooks/report_bmi.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [preprocess_inputs]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_bmi.html
