@@ -145,12 +145,12 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
     fig.autofmt_xdate()
     sns.lineplot(x = 'date', y = 'value', hue='variable', data = df_all_time, ax=ax).set_title('New records by month')
     ax.legend().set_title('')
-    
+
     for group in demographic_covariates + clinical_covariates:
         for definition in definitions:
             df_grouped = df_clean[[definition+'_date',definition,group]].groupby(
                                   [definition+'_date',group]).count().reset_index().rename(columns={definition+'_date':'date'}).set_index(['date', group])
-            df_time=redact_round_table(df_grouped)
+            df_time=redact_round_table(df_grouped).reset_index()
             fig, ax = plt.subplots(figsize=(12, 8))
             fig.autofmt_xdate()
             sns.lineplot(x = 'date', y = definition, hue=group, data = df_time, ax=ax).set_title(f'{definition} recorded by {group} and month')
