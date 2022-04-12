@@ -2,7 +2,6 @@ from cohortextractor import (
     patients,
 )
 from codelists import *
-from datetime import date, timedelta
 
 from config import end_date
 
@@ -302,12 +301,9 @@ demographic_variables = dict(
                 "ratios": {
                     "1": 0.5,
                     "2": 0.25,
-                    "3": 0.125,
-                    "4": 0.0625,
-                    "5": 0.03125,
-                    "6": 0.015625,
-                    "7": 0.0078125,
-                    "8": 0.0078125,
+                    "3": 0.14,
+                    "4": 0.07,
+                    "5": 0.04,
                 }
             },
             "rate": "universal",
@@ -328,19 +324,30 @@ demographic_variables = dict(
             "South East": 0.2, }}}
     ),
     # IMD
-    imd=patients.address_as_of(
-        "index_date",
-        returning="index_of_multiple_deprivation",
-        round_to_nearest=100,
-        return_expectations={
+    imd = patients.categorised_as(
+        {
+            "0": "DEFAULT",
+            "1": """index_of_multiple_deprivation >=1 AND index_of_multiple_deprivation < 32844*1/5""",
+            "2": """index_of_multiple_deprivation >= 32844*1/5 AND index_of_multiple_deprivation < 32844*2/5""",
+            "3": """index_of_multiple_deprivation >= 32844*2/5 AND index_of_multiple_deprivation < 32844*3/5""",
+            "4": """index_of_multiple_deprivation >= 32844*3/5 AND index_of_multiple_deprivation < 32844*4/5""",
+            "5": """index_of_multiple_deprivation >= 32844*4/5 """,
+        },
+        index_of_multiple_deprivation = patients.address_as_of(
+            "index_date",
+            returning = "index_of_multiple_deprivation",
+            round_to_nearest = 100,
+        ),
+        return_expectations = {
             "rate": "universal",
             "category": {
                 "ratios": {
-                    "100": 0.2,
-                    "200": 0.2,
-                    "300": 0.2,
-                    "400": 0.2,
-                    "500": 0.2
+                    "0": 0.01,
+                    "1": 0.20,
+                    "2": 0.20,
+                    "3": 0.20,
+                    "4": 0.20,
+                    "5": 0.19,
                 }
             },
         },
