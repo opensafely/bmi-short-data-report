@@ -15,31 +15,40 @@ def redact_round_table(df_in):
     df_out = df_in.where(df_in > 5, np.nan).apply(lambda x: 5 * round(x/5))
     return df_out
 
-def import_clean(input_path, definitions, other_vars, demographic_covariates, clinical_covariates, null, time_delta, dates=False):
+def import_clean(input_path, definitions, other_vars, demographic_covariates, clinical_covariates, null, time_delta, code_dict='', dates=False):
     # Import
     df_import = pd.read_feather(input_path)
+    # Dates
     if dates==True:
         date_vars = [definition+'_date' for definition in definitions]
+        date_diff_vars = []
         for definition in definitions:
-            df_import[definition+'_date'] = df_import[definition+'_date'].dt.to_period('M').dt.to_timestamp()
+            df_import[definition+'_date'] = df_import[definition+'_date'].dt.to_period(time_delta).dt.to_timestamp()
+            # Create difference between measurement dates
+            df_import = df_import.sort_values(by=['patient_id',definition+'_date'])
+            df_import['date_diff_' + definition] = round(df_import.groupby('patient_id')[definition+'_date'].diff() / np.timedelta64(1, time_delta))
+            date_diff_vars.append('date_diff_' + definition)
     else: 
         date_vars = []
+        date_diff_vars = []
+    # Codes
+    if code_dict!='':
+        for definition in definitions:
+            df_import[definition] = df_import[definition].astype(float)
+            df_import[definition] = df_import[definition].replace(code_dict)
+    
     # Subset to relevant columns
-    df_clean = df_import[['patient_id'] + definitions + other_vars + date_vars + demographic_covariates + clinical_covariates]
+    df_clean = df_import[['patient_id'] + definitions + other_vars + date_vars + date_diff_vars + demographic_covariates + clinical_covariates]
     # Limit to relevant date range
     df_clean = df_clean.sort_values(by='patient_id').reset_index(drop=True)
     # Set null values to nan
     for definition in definitions: 
-        df_clean.loc[df_clean[definition] == null, definition] = np.nan
+        df_clean.loc[df_clean[definition].isin(null), definition] = np.nan
      # Create order for categorical variables
     for group in demographic_covariates + clinical_covariates:
         if df_clean[group].dtype.name == 'category':
             li_order = sorted(df_clean[group].dropna().unique().tolist())
             df_clean[group] = df_clean[group].cat.reorder_categories(li_order, ordered=True)
-    # Create difference between measurement dates
-    for definition in definitions:
-        df_clean = df_clean.sort_values(by=['patient_id',definition+'_date'])
-        df_clean['date_diff_' + definition] = round(df_clean.groupby('patient_id')[definition+'_date'].diff() / np.timedelta64(1, time_delta))
     # Mark patients with value filled/missing for each definition
     li_filled = []
     for definition in definitions:
@@ -51,25 +60,31 @@ def import_clean(input_path, definitions, other_vars, demographic_covariates, cl
 
     df_filled = pd.concat(li_filled, axis=1)
     df_clean = df_clean.merge(df_filled, on='patient_id')
+    
+    # Flag all filled/all missing
+    li_col_filled = [col for col in df_clean.columns if col.endswith('_filled')]
+    li_col_missing = [col for col in df_clean.columns if col.endswith('_missing')]
+    df_clean['all_filled'] = (df_clean[li_col_filled].sum(axis=1) == len(definitions)).astype(int)
+    df_clean['all_missing'] = (df_clean[li_col_missing].sum(axis=1) == len(definitions)).astype(int)
+    
     return df_clean
 
-def patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, missing=False):
+def patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, categories=False, missing=False):
     suffix = '_filled'
     subgroup = 'with records'
+    overlap = 'all_filled'
     if missing == True:
         suffix = '_missing'
         subgroup = 'missing records'
-    # All population
-    li_pop = []
-    for definition in definitions:
-        df_temp = df_clean[['patient_id']].drop_duplicates().set_index('patient_id')
-        df_temp[definition+suffix] = 1
-        li_pop.append(df_temp)
-
-    df_temp0 = pd.concat(li_pop)
-    df_pop = pd.DataFrame(df_temp0.sum()).T
-    df_pop['group'],df_pop['subgroup'] = ['population','N']
-    df_pop = df_pop.set_index(['group','subgroup'])
+        overlap = 'all_missing'
+    if categories == True:
+        li_cat_def = []
+        for definition in definitions:
+            li_cat = df_clean[definition].dropna().astype(str).sort_values().unique().tolist()
+            for x in li_cat:
+                df_clean.loc[df_clean[definition] == x, f'{definition}_{x}_filled'] = 1 
+                li_cat_def.append(f'{definition}_{x}')
+        definitions = li_cat_def
 
     # All with measurement
     li_filled = []
@@ -77,11 +92,14 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
         df_temp = df_clean[['patient_id', definition+suffix]].drop_duplicates().dropna().set_index('patient_id')
         li_filled.append(df_temp)
 
+    df_temp = df_clean[['patient_id', overlap]].drop_duplicates().dropna().set_index('patient_id')
+    li_filled.append(df_temp)
+    
     df_temp2 = pd.concat(li_filled, axis=1)
     df_all = pd.DataFrame(df_temp2.sum()).T
     df_all['group'],df_all['subgroup'] = ['population',subgroup]
     df_all = df_all.set_index(['group','subgroup'])
-
+    
     # By group
     li_group = []
     for group in demographic_covariates + clinical_covariates:
@@ -89,30 +107,65 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
         for definition in definitions:
             df_temp = df_clean[['patient_id', definition+suffix, group]].drop_duplicates().dropna().reset_index(drop=True)
             li_filled_group.append(df_temp)
+            
+        df_temp = df_clean[['patient_id', overlap, group]].drop_duplicates().dropna().reset_index(drop=True)
+        li_filled_group.append(df_temp)
+        
         df_reduce = reduce(lambda df1, df2: pd.merge(df1, df2,on=['patient_id',group],how='outer'), li_filled_group)
         df_reduce2 = df_reduce.sort_values(by=group).drop(columns=['patient_id']).groupby(group).sum().reset_index()
         df_reduce2['group'] = group
         df_reduce2 = df_reduce2.rename(columns={group:'subgroup'})
         li_group.append(df_reduce2)
     df_all_group = pd.concat(li_group, axis=0, ignore_index=True).set_index(['group','subgroup'])
-    df_all_ct = df_pop.append([df_all,df_all_group])
+    
+    # All population
+    li_pop = []
+    for definition in definitions:
+        df_temp = df_clean[['patient_id']].drop_duplicates().set_index('patient_id')
+        df_temp[definition] = 1
+        li_pop.append(df_temp)
+
+    df_temp = df_clean[['patient_id']].drop_duplicates().set_index('patient_id')
+    df_temp[overlap] = 1
+    li_pop.append(df_temp)
+
+    df_temp0 = pd.concat(li_pop)
+    df_pop = pd.DataFrame(df_temp0.sum()).T
+    df_pop['group'],df_pop['subgroup'] = ['population','N']
+    df_pop = df_pop.set_index(['group','subgroup'])
 
     # Redact
-    df_all_redact = redact_round_table(df_all_ct)
+    df_pop = redact_round_table(df_pop)
+    df_append = redact_round_table(df_all.append(df_all_group))
 
     # Create percentage columns 
     for definition in definitions:
-        df_all_redact[definition+'_pct'] = round((df_all_redact[definition+suffix].div(df_all_redact[definition+suffix][0]))*100,1)
+        df_append[definition+'_pct'] = round((df_append[definition+suffix].div(df_append[definition+suffix][0]))*100,1)
+    df_append[overlap+'_pct'] = round((df_append[overlap].div(df_append[overlap][0]))*100,1)
 
+    # Final redaction step
+    df_append = df_append.where(~df_append.isna(), '-')  
+
+    # Combine count and percentage columns
+    for definition in definitions:
+        df_append[definition] = df_append[definition+suffix].astype(str) + " (" + df_append[definition+'_pct'].astype(str) + ")" 
+        df_append = df_append.drop(columns=[definition+suffix,definition+'_pct'])
+    df_append[overlap] = df_append[overlap].astype(str) + " (" + df_append[overlap+'_pct'].astype(str) + ")" 
+    df_append = df_append.drop(columns=[overlap+'_pct'])
+
+    if categories == False:
+        df_all_redact = df_pop.append(df_append)
+    if categories == True:
+        df_all_redact = df_append
+    
     # Column order
     li_col_order = []
     for definition in definitions:
-        li_col_order.append(definition+suffix)
-        li_col_order.append(definition+'_pct')
+        li_col_order.append(definition)
+    li_col_order.append(overlap)
+
     df_all_redact = df_all_redact[li_col_order]
     
-    # Final redaction step
-    df_all_redact = df_all_redact.where(~df_all_redact.isna(), '-')
     return df_all_redact
 
 def display_heatmap(df_clean, definitions):
@@ -127,7 +180,7 @@ def display_heatmap(df_clean, definitions):
     # Prepare data for heatmap input
     df_temp2 = pd.concat(li_filled, axis=1)
     df_transform = df_temp2.replace(np.nan,0)
-    df_dot = df_transform.T.dot(df_transform)
+    df_dot = redact_round_table(df_transform.T.dot(df_transform))
     
     # Create mask to eliminate duplicates in heatmap
     mask = np.triu(np.ones_like(df_dot))
@@ -258,7 +311,7 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
         df_oor.loc[(df_oor[definition] < min_range) | (df_oor[definition] > max_range), "out_of_range_"+definition] = 1
         # Make definitions null if not out of range or empty
         df_oor["oor_" + definition] = df_oor[definition]
-        df_oor.loc[(df_oor["out_of_range_"+definition] != 1) | (df_oor[definition] == null), "oor_" + definition] = np.nan
+        df_oor.loc[(df_oor["out_of_range_"+definition] != 1) | (df_oor[definition].isin(null)), "oor_" + definition] = np.nan
         if group == '':
             try:
                 df_out = df_oor.agg(
@@ -429,3 +482,46 @@ def report_update_frequency(df_occ, definitions, time_delta, num_definitions, gr
             sns.boxplot(x=group, y='value', hue='variable', data=df_plot)
             plt.title(f'Update frequencies by {group} and {time_delta}')
             plt.show()
+            
+def latest_common_comparison(df_clean, definitions, other_vars):
+    for definition in definitions:
+        df_subset = df_clean.loc[~df_clean[definition].isna()]
+        df_subset=df_subset[[definition]+other_vars].set_index(definition)
+
+        df_subset2 = df_subset.where(df_subset.eq(df_subset.max(1),axis=0))
+        df_subset_3 = df_subset2.notnull().astype('int').reset_index()
+        df_sum = redact_round_table(df_subset_3.groupby(definition).sum())
+        df_sum = df_sum.where(~df_sum.isna(), '-')
+
+        df_counts = pd.DataFrame(np.diagonal(df_sum),index=df_sum.index,columns=[f'matching (n={np.diagonal(df_sum).sum()})'])
+
+        df_sum2 = df_sum.copy(deep=True)
+        np.fill_diagonal(df_sum2.values, 0)
+        df_diag = pd.DataFrame(df_sum2.sum(axis=1), columns=[f'not_matching (n={df_sum2.sum(axis=1).sum()})'])
+        df_out = df_counts.merge(df_diag,right_index=True,left_index=True)
+        display(df_out)
+
+        df_sum = redact_round_table(df_subset_3.groupby(definition).sum())
+        df_sum = df_sum.where(~df_sum.isna(), '-')
+
+        for col in df_sum.columns:
+            df_sum = df_sum.rename(columns = {col:f'{col} (n={df_sum[col].sum()})'})
+        display(df_sum)
+            
+def state_change(df_clean, other_vars, definitions):
+    for definition in definitions:
+        df_subset = df_clean[
+            [definition]+other_vars
+        ].replace(0,np.nan).set_index(definition).reset_index()
+        df_subset['n'] = 1
+        # Count
+        df_subset2 = df_subset.loc[~df_subset[definition].isna()]
+        df_subset3 = redact_round_table(df_subset2.groupby(definition).count()).reset_index()
+        # Set index
+        df_subset3['index'] = df_subset3[definition].astype(str) + " (n = " + df_subset3['n'].astype(int).astype(str) + ")"
+        df_out = df_subset3.drop(columns=[definition,'n']).rename(columns = {'index':definition}).set_index(definition)
+        # Null out the diagonal
+        np.fill_diagonal(df_out.values, np.nan)
+        df_out = df_out.where(~df_out.isna(), '-')
+    
+        display(df_out)
