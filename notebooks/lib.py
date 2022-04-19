@@ -1,3 +1,4 @@
+import datetime
 import itertools
 import matplotlib.gridspec as gridspec
 import numpy as np
@@ -15,16 +16,31 @@ def redact_round_table(df_in):
     df_out = df_in.where(df_in > 5, np.nan).apply(lambda x: 5 * round(x/5))
     return df_out
 
-def import_clean(input_path, definitions, other_vars, demographic_covariates, clinical_covariates, null, time_delta, code_dict='', dates=False):
+def import_clean(input_path, definitions, other_vars, demographic_covariates, 
+                 clinical_covariates, null, date_min, date_max, 
+                 time_delta, code_dict='', dates=False):
     # Import
     df_import = pd.read_feather(input_path)
     # Dates
     if dates==True:
         date_vars = [definition+'_date' for definition in definitions]
+        # Create variable that captures difference in measurement dates
         date_diff_vars = []
+        # Define start and end dates
+        start_date = datetime.datetime.strptime(date_min, '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(date_max, '%Y-%m-%d')
         for definition in definitions:
-            df_import[definition+'_date'] = df_import[definition+'_date'].dt.to_period(time_delta).dt.to_timestamp()
+            # Remove OpenSAFELY null dates 
+            df_import.loc[df_import[definition+'_date'] == '1900-01-01', definition+'_date'] = np.nan
+            # Limit to period of interest             
+            df_import[definition+'_date'] = pd.to_datetime(df_import[definition+'_date'])
+            df_import.loc[df_import[definition+'_date'] < start_date, definition+'_date'] = np.nan
+            df_import.loc[df_import[definition+'_date'] > end_date, definition+'_date'] = np.nan
+            # Remove the measurement if outside the date parameters
+            df_import.loc[df_import[definition+'_date'].isna(), definition] = np.nan
+            df_import 
             # Create difference between measurement dates
+            df_import[definition+'_date'] = df_import[definition+'_date'].dt.to_period(time_delta).dt.to_timestamp()
             df_import = df_import.sort_values(by=['patient_id',definition+'_date'])
             df_import['date_diff_' + definition] = round(df_import.groupby('patient_id')[definition+'_date'].diff() / np.timedelta64(1, time_delta))
             date_diff_vars.append('date_diff_' + definition)
