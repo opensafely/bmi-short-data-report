@@ -236,16 +236,18 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
         if num_definitions == 1:
             for definition in definitions: 
 
-                avg_value = df_occ.agg(
-                    avg = (definition, 'mean'),
-                    count = (definition, 'count')
+                avg_value = pd.DataFrame(
+                    df_occ[definition].agg(
+                        ['mean','count']
+                    )
                 )
                 if avg_value.loc['count'][0] > 6:
                     avg_value.loc['count'][0] = 5 * round(avg_value.loc['count'][0]/5)
                     print(f'Average {definition}:\n')
                     display(avg_value)
                     fig, ax = plt.subplots(figsize=(12, 8))
-                    plt.hist(df_occ[definition])
+                    hist_data = df_occ[definition].loc[~df_occ[definition].isna()]
+                    plt.hist(hist_data, bins=np.arange(min(hist_data), max(hist_data)))
                     plt.title('Distribution of ' + definition)
                     plt.show()
                 else:
@@ -269,9 +271,8 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
         if num_definitions == 1:
             for definition in definitions: 
                 df_bp = df_occ[[group]+ [definition]]
-                avg_value = df_bp.groupby(group).agg(
-                    mean = (definition, 'mean'),
-                    count = (definition, 'count')
+                avg_value = df_bp.groupby(group)[definition].agg(
+                    ['mean', 'count']
                 )
                 # Redact and round values
                 avg_value['count'] = avg_value['count'].where(
@@ -345,11 +346,11 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
             else:
                 df_out["oor_" + definition] = '-'
         else:
-            df_out = df_oor.groupby(group).agg(
-                                                count = ("oor_" + definition, 'count'),
-                                                mean  = ("oor_" + definition, 'mean'),
-                                                pct25 = ("oor_" + definition, q25),
-                                                pct75 = ("oor_" + definition, q75),
+            df_out = df_oor.groupby(group)["oor_" + definition].agg(
+                                                [('count', 'count'),
+                                                 ('mean', 'mean'),
+                                                 ('pct25', q25),
+                                                 ('pct75', q75)]
                                               ).add_suffix("_"+definition)
             df_out.loc[df_out["count_" + definition] > 5, "count_" + definition] = 5 * round(df_out["count_" + definition]/5)
             df_out.loc[df_out["count_" + definition] < 6, 
