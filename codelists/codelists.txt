@@ -16,4 +16,3 @@ opensafely/diabetes-snomed/2020-04-15/
 opensafely/housebound/5bc77310/
 opensafely/hypertension-snomed/2020-04-28/
 primis-covid19-vacc-uptake/learndis/v1/
-primis-covid19-vacc-uptake/sev_obesity/v1.2/

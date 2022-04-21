@@ -63,6 +63,7 @@ clinical_variables = dict(
         )
         for n in range(2, 11)
     },
+    # Weight (SNOMED)
     weight1=patients.with_these_clinical_events(
         weight_codes_snomed,
         on_or_before=end_date,
@@ -100,6 +101,45 @@ clinical_variables = dict(
         )
         for n in range(1,11)
     },
+    # Weight (CTV3 definition in backend)
+    weight_backend1=patients.with_these_clinical_events(
+        weight_codes_backend,
+        on_or_before=end_date,
+        find_last_match_in_period=True,
+        returning="numeric_value",
+        include_date_of_match=True,
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "incidence": 0.7,
+            "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
+        },
+    ),
+    **{
+        f"weight_backend{n}": patients.with_these_clinical_events(
+            weight_codes_backend,
+            on_or_before=f"weight_backend{n-1}_date - 1 day",
+            find_last_match_in_period=True,
+            returning="numeric_value",
+            include_date_of_match=True,
+            date_format="YYYY-MM-DD",
+            return_expectations={
+                "incidence": 0.7,
+                "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
+            },
+        )
+        for n in range(2, 11)
+    },
+    **{
+        f"weight_backend_age{n}": patients.age_as_of(
+            f"weight_backend{n}_date",
+            return_expectations={
+                "rate" : "universal",
+                "int" : {"distribution" : "population_ages"}
+            }
+        )
+        for n in range(1,11)
+    },
+    # Height (SNOMED)
     height1=patients.with_these_clinical_events(
         height_codes_snomed,
         on_or_before=end_date,
@@ -130,6 +170,44 @@ clinical_variables = dict(
     **{
         f"height_age{n}": patients.age_as_of(
             f"height{n}_date",
+            return_expectations={
+                "rate" : "universal",
+                "int" : {"distribution" : "population_ages"}
+            }
+        )
+        for n in range(1,11)
+    },
+    # Height (CTV3 definition in backend)
+    height_backend1=patients.with_these_clinical_events(
+        height_codes_backend,
+        on_or_before=end_date,
+        find_last_match_in_period=True,
+        returning="numeric_value",
+        include_date_of_match=True,
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "incidence": 0.7,
+            "float": {"distribution": "normal", "mean": 1.65, "stddev": 0.06},
+        },
+    ),
+    **{
+        f"height_backend{n}": patients.with_these_clinical_events(
+            height_codes_backend,
+            on_or_before=f"height_backend{n-1}_date - 1 day",
+            find_last_match_in_period=True,
+            returning="numeric_value",
+            include_date_of_match=True,
+            date_format="YYYY-MM-DD",
+            return_expectations={
+                "incidence": 0.7,
+                "float": {"distribution": "normal", "mean": 1.65, "stddev": 0.06},
+            },
+        )
+        for n in range(2, 11)
+    },
+    **{
+        f"height_backend_age{n}": patients.age_as_of(
+            f"height_backend{n}_date",
             return_expectations={
                 "rate" : "universal",
                 "int" : {"distribution" : "population_ages"}
@@ -222,15 +300,6 @@ clinical_variables = dict(
         wider_ld_codes,
         on_or_before="index_date - 1 day",
         returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
-    # Severe obesity
-    sev_obesity=patients.with_these_clinical_events(
-        sev_obesity_codes,
-        between=["index_date - 2 years", "index_date - 1 day"],
-        returning="date",
-        date_format="YYYY-MM-DD",
-        find_last_match_in_period=True,
         return_expectations={"incidence": 0.01, },
     ),
 )

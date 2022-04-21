@@ -1,5 +1,6 @@
 from cohortextractor import (
     codelist_from_csv,
+    codelist
 )
 
 # ---------------------------
@@ -21,6 +22,8 @@ weight_codes_snomed = codelist_from_csv(
     system="snomed",
     column='code'
 )
+height_codes_backend = codelist(["XM01E", "229.."], system="ctv3")
+weight_codes_backend = codelist(["X76C7", "22A.."], system="ctv3")
 
 # ----------------
 # Ethnicity codes
@@ -106,10 +109,4 @@ wider_ld_codes = codelist_from_csv(
     "codelists/primis-covid19-vacc-uptake-learndis.csv",
     system="snomed",
     column="code"
-)
-# Severe obesity
-sev_obesity_codes = codelist_from_csv(
-    "codelists/primis-covid19-vacc-uptake-sev_obesity.csv",
-    system="snomed",
-    column="code",
 )
