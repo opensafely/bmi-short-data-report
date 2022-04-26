@@ -525,7 +525,7 @@ def latest_common_comparison(df_clean, definitions, other_vars):
             df_sum = df_sum.rename(columns = {col:f'{col} (n={df_sum[col].sum()})'})
         display(df_sum)
             
-def state_change(df_clean, other_vars, definitions):
+def state_change(df_clean, definitions, other_vars):
     for definition in definitions:
         df_subset = df_clean[
             [definition]+other_vars
