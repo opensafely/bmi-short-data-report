@@ -28,7 +28,7 @@ actions:
         reports: output/cohort_reports_outputs/descriptives_input_processed.html
 
   generate_report_bmi:
-    run: python:latest jupyter nbconvert /workspace/notebooks/report_height_weight.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_bmi.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
     needs: [preprocess_inputs]
     outputs:
       moderately_sensitive:
