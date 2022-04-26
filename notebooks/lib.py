@@ -75,6 +75,8 @@ def import_clean(input_path, definitions, other_vars, demographic_covariates,
         li_filled.append(df_fill)
 
     df_filled = pd.concat(li_filled, axis=1)
+    # Remove list from memory
+    del li_filled  
     df_clean = df_clean.merge(df_filled, on='patient_id')
     
     # Flag all filled/all missing
@@ -112,6 +114,8 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
     li_filled.append(df_temp)
     
     df_temp2 = pd.concat(li_filled, axis=1)
+    # Remove list from memory
+    del li_filled
     df_all = pd.DataFrame(df_temp2.sum()).T
     df_all['group'],df_all['subgroup'] = ['population',subgroup]
     df_all = df_all.set_index(['group','subgroup'])
@@ -128,11 +132,15 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
         li_filled_group.append(df_temp)
         
         df_reduce = reduce(lambda df1, df2: pd.merge(df1, df2,on=['patient_id',group],how='outer'), li_filled_group)
+        # Remove list from memory
+        del li_filled_group 
         df_reduce2 = df_reduce.sort_values(by=group).drop(columns=['patient_id']).groupby(group).sum().reset_index()
         df_reduce2['group'] = group
         df_reduce2 = df_reduce2.rename(columns={group:'subgroup'})
         li_group.append(df_reduce2)
     df_all_group = pd.concat(li_group, axis=0, ignore_index=True).set_index(['group','subgroup'])
+    # Remove list from memory
+    del li_group  
     
     # All population
     li_pop = []
@@ -146,6 +154,8 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
     li_pop.append(df_temp)
 
     df_temp0 = pd.concat(li_pop)
+    # Remove list from memory
+    del li_pop 
     df_pop = pd.DataFrame(df_temp0.sum()).T
     df_pop['group'],df_pop['subgroup'] = ['population','N']
     df_pop = df_pop.set_index(['group','subgroup'])
@@ -195,6 +205,8 @@ def display_heatmap(df_clean, definitions):
 
     # Prepare data for heatmap input
     df_temp2 = pd.concat(li_filled, axis=1)
+    # Remove list from memory
+    del li_filled 
     df_transform = df_temp2.replace(np.nan,0)
     df_dot = redact_round_table(df_transform.T.dot(df_transform))
     
@@ -213,6 +225,8 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
         df_grouped = df_clean[[definition+'_date',definition]].groupby(definition+'_date').count().reset_index().rename(columns={definition+'_date':'date'}).set_index('date')
         li_df.append(redact_round_table(df_grouped))
     df_all_time = pd.concat(li_df).stack().reset_index().rename(columns={'level_1':'variable',0:'value'})
+    # Remove list from memory
+    del li_df 
     fig, ax = plt.subplots(figsize=(12, 8))
     fig.autofmt_xdate()
     sns.lineplot(x = 'date', y = 'value', hue='variable', data = df_all_time, ax=ax).set_title('New records by month')
@@ -360,6 +374,8 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
     
     if num_definitions == 1:    
         display(df_out)
+        # Remove list from memory
+        del li_dfs 
         if group == '': 
             if df_out["oor_" + definition]['count'] != '-':
                 df_plot = df_oor["oor_" + definition]
