@@ -316,7 +316,7 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
                     plt.hist(hist_data, bins=np.arange(min(hist_data), max(hist_data)))
                     plt.title('Distribution of ' + definition)
                     #plt.show()
-                    plt.savefig(f'output/figures/distribution_{definition}.png')
+                    plt.savefig('output/figures/distribution.png')
                 else:
                     print('Table and plot redacted due to low counts.')
                     
@@ -330,12 +330,12 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
                 avg_value['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
             print('Averages:\n')
             #display(avg_value)
-            avg_value.to_csv(f'output/tables/avg_value_{definitions[0]}.csv')
+            avg_value.to_csv('output/tables/avg_value.csv')
             fig, ax = plt.subplots(figsize=(12, 8))
             sns.boxplot(data=df_bp,showfliers = False)
             plt.title("Distributions of values")
             #plt.show()
-            plt.savefig(f'output/figures/distribution_{definitions[0]}.png')
+            plt.savefig('output/figures/distribution.png')
     else:
         if num_definitions == 1:
             for definition in definitions: 
@@ -355,7 +355,7 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
                 sns.boxplot(x=group, y=definition, data=df_bp.loc[~df_bp[group].isin(null_index)], showfliers=False)
                 plt.title(f"Distributions by {group}")
                 #plt.show()
-                plt.savefig(f'output/figures/distribution_{definition}_{group}.png')
+                plt.savefig(f'output/figures/distribution_{group}.png')
         else:
             if df_occ[group].dtype == 'bool':
                 df_occ[group] = df_occ[group].apply(lambda x: str(x))
@@ -372,7 +372,7 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
                                     ['ct_'+definition,'avg_'+definition]] = ['-','-']
             print(f'Averages by {group}:\n')
             #display(avg_value)
-            avg_value.to_csv(f'output/tables/avg_value_{definitions[0]}_{group}.csv')
+            avg_value.to_csv(f'output/tables/avg_value_{group}.csv')
             for definition in definitions:
                 null_index = []
                 null_index = avg_value[avg_value['ct_'+definition] == '-'].index.tolist()
@@ -382,7 +382,7 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
             sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
             plt.title(f'Distributions by {group}')
             #plt.show()
-            plt.savefig(f'output/figures/distribution_{definitions[0]}_{group}.png')
+            plt.savefig(f'output/figures/distribution_{group}.png')
             
 def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitions, null, group=''):
     """
@@ -443,7 +443,7 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
                 plt.hist(df_plot)
                 plt.title('Distribution of out of range ' + definition)
                 #plt.show()
-                plt.savefig(f'output/figures/out_of_range_{definition}.png')
+                plt.savefig('output/figures/out_of_range.png')
             else:
                 print('Plot redacted due to low counts.')
         else:
@@ -457,7 +457,7 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
                     sns.boxplot(x=group, y="oor_" + definition, data=df_bp, showfliers=False)
                     plt.title(f"Distribution of out of range values by {group}")
                     plt.show()
-                    plt.savefig(f'output/figures/out_of_range_{definition}_{group}.png')
+                    plt.savefig(f'output/figures/out_of_range_{group}.png')
                 else:
                     print('Plot redacted due to low counts.')
     else:
@@ -465,8 +465,8 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
         # Remove list from memory
         del li_dfs 
         #display(df_merged)
-        df_merged.to_csv('output/tables/out_of_range.csv')
         if group == '':    
+            df_merged.to_csv('output/tables/out_of_range.csv')
             cols = ["oor_" + definition for definition in definitions]
             df_bp = df_oor[cols]
             if df_merged["oor_" + definition]['count'] == '-':
@@ -480,6 +480,7 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
             except: 
                 print('Plot redacted due to low counts.')
         else:
+            df_merged.to_csv(f'output/tables/out_of_range_{group}.csv')
             df_oor = df_oor.loc[~df_oor[group].isna()]
             for definition in definitions: 
                 null_index = df_merged[df_merged['count_'+definition] == '-'].index.tolist()
@@ -494,7 +495,7 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
                 sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
                 plt.title(f'Distribution of out of range values by {group}')
                 #plt.show()
-                plt.savefig('output/figures/out_of_range_{group}.png')
+                plt.savefig(f'output/figures/out_of_range_{group}.png')
             else: 
                 print('Plot redacted due to low counts.')
         
