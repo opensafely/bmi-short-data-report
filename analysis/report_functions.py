@@ -161,10 +161,11 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
     li_filled.append(df_temp)
     
     df_temp2 = pd.concat(li_filled, axis=1)
+    df_temp2['population'] = 1
     # Remove list from memory
     del li_filled
     df_all = pd.DataFrame(df_temp2.sum()).T
-    df_all['group'],df_all['subgroup'] = ['population',subgroup]
+    df_all['group'],df_all['subgroup'] = ['all',subgroup]
     df_all = df_all.set_index(['group','subgroup'])
     
     # By group
@@ -179,6 +180,7 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
         li_filled_group.append(df_temp)
         
         df_reduce = reduce(lambda df1, df2: pd.merge(df1, df2,on=['patient_id',group],how='outer'), li_filled_group)
+        df_reduce['population'] = 1
         # Remove list from memory
         del li_filled_group 
         df_reduce2 = df_reduce.sort_values(by=group).drop(columns=['patient_id']).groupby(group).sum().reset_index()
@@ -187,34 +189,15 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
         li_group.append(df_reduce2)
     df_all_group = pd.concat(li_group, axis=0, ignore_index=True).set_index(['group','subgroup'])
     # Remove list from memory
-    del li_group  
+    del li_group 
     
-    # All population
-    li_pop = []
-    for definition in definitions:
-        df_temp = df_clean[['patient_id']].drop_duplicates().set_index('patient_id')
-        df_temp[definition] = 1
-        li_pop.append(df_temp)
-
-    df_temp = df_clean[['patient_id']].drop_duplicates().set_index('patient_id')
-    df_temp[overlap] = 1
-    li_pop.append(df_temp)
-
-    df_temp0 = pd.concat(li_pop)
-    # Remove list from memory
-    del li_pop 
-    df_pop = pd.DataFrame(df_temp0.sum()).T
-    df_pop['group'],df_pop['subgroup'] = ['population','N']
-    df_pop = df_pop.set_index(['group','subgroup'])
-
     # Redact
-    df_pop = redact_round_table(df_pop)
     df_append = redact_round_table(df_all.append(df_all_group))
-
+        
     # Create percentage columns 
     for definition in definitions:
-        df_append[definition+'_pct'] = round((df_append[definition+suffix].div(df_append[definition+suffix][0]))*100,1)
-    df_append[overlap+'_pct'] = round((df_append[overlap].div(df_append[overlap][0]))*100,1)
+        df_append[definition+'_pct'] = round((df_append[definition+suffix].div(df_append['population']))*100,1)
+    df_append[overlap+'_pct'] = round((df_append[overlap].div(df_append['population']))*100,1)
 
     # Final redaction step
     df_append = df_append.where(~df_append.isna(), '-')  
@@ -225,22 +208,20 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
         df_append = df_append.drop(columns=[definition+suffix,definition+'_pct'])
     df_append[overlap] = df_append[overlap].astype(str) + " (" + df_append[overlap+'_pct'].astype(str) + ")" 
     df_append = df_append.drop(columns=[overlap+'_pct'])
-
-    if categories == False:
-        df_all_redact = df_pop.append(df_append)
-    if categories == True:
-        df_all_redact = df_append
     
     # Column order
     li_col_order = []
     for definition in definitions:
         li_col_order.append(definition)
     li_col_order.append(overlap)
+    li_col_order.append('population')
 
-    df_all_redact = df_all_redact[li_col_order]
-    
-    #return df_all_redact
-    df_all_redact.to_csv(f'output/tables/patient_counts{suffix}.csv')
+    df_all_redact = df_append[li_col_order]
+
+    if categories == False:
+        df_all_redact.to_csv(f'output/tables/patient_counts{suffix}.csv')
+    if categories == True:
+        df_all_redact.to_csv(f'output/tables/patient_counts_by_categories{suffix}.csv')
 
 def display_heatmap(df_clean, definitions):
     # All with measurement
