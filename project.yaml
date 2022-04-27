@@ -27,13 +27,6 @@ actions:
   #     moderately_sensitive:
   #       reports: output/cohort_reports_outputs/descriptives_input_processed.html
 
-  # generate_report_bmi:
-  #   run: python:latest jupyter nbconvert /workspace/notebooks/report_bmi.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
-  #   needs: [preprocess_inputs]
-  #   outputs:
-  #     moderately_sensitive:
-  #       notebook: output/report_bmi.html
-
   # generate_report_height_weight:
   #   run: python:latest jupyter nbconvert /workspace/notebooks/report_height_weight.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
   #   needs: [preprocess_inputs]
@@ -48,3 +41,10 @@ actions:
       moderately_sensitive: 
         tables: output/tables/*.csv
         figures: output/figures/*.png
+        
+  generate_report_bmi:
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_bmi.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [execute_validation_analyses]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_bmi.html

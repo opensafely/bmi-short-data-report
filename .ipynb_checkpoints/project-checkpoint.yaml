@@ -1,0 +1,50 @@
+version: '3.0'
+
+expectations:
+  population_size: 1000
+
+actions:
+
+  generate_study_population:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition --output-dir=output/data --output-format feather
+    outputs:
+      highly_sensitive:
+        cohort: output/data/input.feather
+
+  preprocess_inputs:
+    run: python:latest python analysis/preprocess_inputs.py --output-format feather
+    needs: [generate_study_population]
+    outputs:
+      highly_sensitive:
+        cohort_with_duration: output/data/input_processed.feather
+
+  # generate_cohort_report:
+  #   run: cohort-report:v3.0.0 output/data/input_processed.feather
+  #   needs: [preprocess_inputs]
+  #   config:
+  #     output_path: output/cohort_reports_outputs
+  #   outputs: 
+  #     moderately_sensitive:
+  #       reports: output/cohort_reports_outputs/descriptives_input_processed.html
+
+  # generate_report_height_weight:
+  #   run: python:latest jupyter nbconvert /workspace/notebooks/report_height_weight.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+  #   needs: [preprocess_inputs]
+  #   outputs:
+  #     moderately_sensitive:
+  #       notebook: output/report_height_weight.html
+
+  execute_validation_analyses:
+    run: python:latest python analysis/report_functions.py
+    needs: [preprocess_inputs]
+    outputs:
+      moderately_sensitive: 
+        tables: output/tables/*.csv
+        figures: output/figures/*.png
+        
+  generate_report_bmi:
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_bmi.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [execute_validation_analyses]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_bmi.html
