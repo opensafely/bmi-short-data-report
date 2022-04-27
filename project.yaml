@@ -18,29 +18,13 @@ actions:
       highly_sensitive:
         cohort_with_duration: output/data/input_processed.feather
 
-  # generate_cohort_report:
-  #   run: cohort-report:v3.0.0 output/data/input_processed.feather
-  #   needs: [preprocess_inputs]
-  #   config:
-  #     output_path: output/cohort_reports_outputs
-  #   outputs: 
-  #     moderately_sensitive:
-  #       reports: output/cohort_reports_outputs/descriptives_input_processed.html
-
-  # generate_report_height_weight:
-  #   run: python:latest jupyter nbconvert /workspace/notebooks/report_height_weight.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
-  #   needs: [preprocess_inputs]
-  #   outputs:
-  #     moderately_sensitive:
-  #       notebook: output/report_height_weight.html
-
   execute_validation_analyses:
     run: python:latest python analysis/validation_script.py
     needs: [preprocess_inputs]
     outputs:
       moderately_sensitive: 
-        tables: output/tables/*.csv
-        figures: output/figures/*.png
+        tables: output/phenotype_validation_bmi/tables/*.csv
+        figures: output/phenotype_validation_bmi/figures/*.png
         
   generate_report_bmi:
     run: python:latest jupyter nbconvert /workspace/notebooks/report_bmi.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
@@ -48,3 +32,33 @@ actions:
     outputs:
       moderately_sensitive:
         notebook: output/report_bmi.html
+        
+  execute_validation_analyses_height:
+    run: python:latest python analysis/validation_script_height.py
+    needs: [preprocess_inputs]
+    outputs:
+      moderately_sensitive: 
+        tables: output/phenotype_validation_height/tables/*.csv
+        figures: output/phenotype_validation_height/figures/*.png
+        
+  generate_report_height:
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_height.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [execute_validation_analyses_height]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_height.html
+        
+  execute_validation_analyses_weight:
+    run: python:latest python analysis/validation_script_weight.py
+    needs: [preprocess_inputs]
+    outputs:
+      moderately_sensitive: 
+        tables: output/phenotype_validation_weight/tables/*.csv
+        figures: output/phenotype_validation_weight/figures/*.png
+        
+  generate_report_weight:
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_weight.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [execute_validation_analyses_weight]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_weight.html
