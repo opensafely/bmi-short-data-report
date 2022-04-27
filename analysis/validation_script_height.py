@@ -6,7 +6,7 @@ from lib_phenotype_validation import *
 input_path = 'output/data/input_processed.feather'
 
 # Definitions
-definitions = ['backend_bmi', 'computed_bmi', 'derived_bmi', 'recorded_bmi']
+definitions = ['height','height_backend']
 
 # Code dictionary
 code_dict = {
@@ -15,27 +15,27 @@ code_dict = {
 }
 
 # Other variables to include
-other_vars = ['height','weight']
+other_vars = []
 
 # Dates
-dates = True
-date_min = '2015-03-01'
-date_max = '2022-03-01'
-time_delta = 'M'
+dates = False
+date_min = ''
+date_max = ''
+time_delta = ''
 
 # Min/max range
-min_range = 4
-max_range = 200
+min_range = 0.5
+max_range = 2.8
 
 # Null value – could be multiple values in a list [0,'0',NA]
-null = [0]
+null = ['0',0,np.nan]
 
 # Covariates
 demographic_covariates = ['age_band', 'sex', 'ethnicity', 'region', 'imd']
 clinical_covariates = ['dementia', 'diabetes', 'hypertension', 'learning_disability']
 
 # Output path
-output_path = 'phenotype_validation_bmi'
+output_path = 'phenotype_validation_height'
         
 ########################## SPECIFY ANALYSES TO RUN HERE ##############################
 
@@ -47,8 +47,6 @@ def main():
     patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
     # Count patients without records
     patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, output_path, missing=True)
-    # Generate heatmap of overlapping definitions
-    display_heatmap(df_clean, definitions, output_path)
     # Report distributions
     report_distribution(df_clean, definitions, len(definitions), output_path, group='')
     for group in demographic_covariates + clinical_covariates:
@@ -57,12 +55,6 @@ def main():
     report_out_of_range(df_clean, definitions, min_range, max_range, len(definitions), null, output_path, group='')
     for group in demographic_covariates + clinical_covariates:
         report_out_of_range(df_clean, definitions, min_range, max_range, len(definitions), null, output_path, group)
-    # Report new records over time
-    records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
-    # Report update frequency
-    report_update_frequency(df_clean, definitions, time_delta, len(definitions), output_path, group='')
-    for group in demographic_covariates + clinical_covariates:
-        report_update_frequency(df_clean, definitions, time_delta, len(definitions), output_path, group)
         
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
