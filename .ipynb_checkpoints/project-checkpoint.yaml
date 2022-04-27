@@ -35,7 +35,7 @@ actions:
   #       notebook: output/report_height_weight.html
 
   execute_validation_analyses:
-    run: python:latest python analysis/report_functions.py
+    run: python:latest python analysis/validation_script.py
     needs: [preprocess_inputs]
     outputs:
       moderately_sensitive: 
