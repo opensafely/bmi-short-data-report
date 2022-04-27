@@ -34,33 +34,35 @@ null = [0]
 demographic_covariates = ['age_band', 'sex', 'ethnicity', 'region', 'imd']
 clinical_covariates = ['dementia', 'diabetes', 'hypertension', 'learning_disability']
 
+# Output path
+output_path = 'phenotype_validation_bmi'
         
 ########################## SPECIFY ANALYSES TO RUN HERE ##############################
 
 def main():
     df_clean = import_clean(input_path, definitions, other_vars, demographic_covariates, 
                         clinical_covariates, null, date_min, date_max, 
-                        time_delta, code_dict, dates)
+                        time_delta, output_path, code_dict, dates)
     # Count patients with records
-    patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates)
+    patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
     # Count patients without records
-    patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, missing=True)
+    patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, output_path, missing=True)
     # Generate heatmap of overlapping definitions
-    display_heatmap(df_clean, definitions)
+    display_heatmap(df_clean, definitions, output_path)
     # Report distributions
-    report_distribution(df_clean, definitions, len(definitions), group='')
+    report_distribution(df_clean, definitions, len(definitions), output_path, group='')
     for group in demographic_covariates + clinical_covariates:
-        report_distribution(df_clean, definitions, len(definitions), group)
+        report_distribution(df_clean, definitions, len(definitions), output_path, group)
     # Report out-of-range values
-    report_out_of_range(df_clean, definitions, min_range, max_range, len(definitions), null, group='')
+    report_out_of_range(df_clean, definitions, min_range, max_range, len(definitions), null, output_path, group='')
     for group in demographic_covariates + clinical_covariates:
-        report_out_of_range(df_clean, definitions, min_range, max_range, len(definitions), null, group)
+        report_out_of_range(df_clean, definitions, min_range, max_range, len(definitions), null, output_path, group)
     # Report new records over time
-    records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates)
+    records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
     # Report update frequency
-    report_update_frequency(df_clean, definitions, time_delta, len(definitions), group='')
+    report_update_frequency(df_clean, definitions, time_delta, len(definitions), output_path, group='')
     for group in demographic_covariates + clinical_covariates:
-        report_update_frequency(df_clean, definitions, time_delta, len(definitions), group)
+        report_update_frequency(df_clean, definitions, time_delta, len(definitions), output_path, group)
         
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 

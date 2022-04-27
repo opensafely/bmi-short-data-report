@@ -17,7 +17,7 @@ def redact_round_table(df_in):
 
 def import_clean(input_path, definitions, other_vars, demographic_covariates, 
                  clinical_covariates, null, date_min, date_max, 
-                 time_delta, code_dict='', dates=False):
+                 time_delta, output_path, code_dict='', dates=False):
     # Import
     df_import = pd.read_feather(input_path)
     # Dates
@@ -85,8 +85,8 @@ def import_clean(input_path, definitions, other_vars, demographic_covariates,
     df_clean['all_missing'] = (df_clean[li_col_missing].sum(axis=1) == len(definitions)).astype(int)
     
     # Check whether output paths exist or not, create if missing
-    path_tables = 'output/tables'
-    path_figures = 'output/figures'
+    path_tables = f'output/{output_path}/tables'
+    path_figures = f'output/{output_path}/figures'
     li_filepaths = [path_tables, path_figures]
 
     for filepath in li_filepaths:
@@ -96,7 +96,7 @@ def import_clean(input_path, definitions, other_vars, demographic_covariates,
 
     return df_clean
 
-def patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, categories=False, missing=False):
+def patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, output_path, categories=False, missing=False):
     suffix = '_filled'
     subgroup = 'with records'
     overlap = 'all_filled'
@@ -181,11 +181,11 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
     df_all_redact = df_append[li_col_order]
 
     if categories == False:
-        df_all_redact.to_csv(f'output/tables/patient_counts{suffix}.csv')
+        df_all_redact.to_csv(f'output/{output_path}/tables/patient_counts{suffix}.csv')
     if categories == True:
-        df_all_redact.to_csv(f'output/tables/patient_counts_by_categories{suffix}.csv')
+        df_all_redact.to_csv(f'output/{output_path}/tables/patient_counts_by_categories{suffix}.csv')
 
-def display_heatmap(df_clean, definitions):
+def display_heatmap(df_clean, definitions, output_path):
     # All with measurement
     li_filled = []
     for definition in definitions:
@@ -209,9 +209,9 @@ def display_heatmap(df_clean, definitions):
     fig, ax = plt.subplots(figsize=(12, 8))
     sns.heatmap(df_dot, annot=True, mask=mask, fmt='g', cmap="YlGnBu", vmin=0)
     #plt.show()
-    plt.savefig('output/figures/heatmap.png')
+    plt.savefig(f'output/{output_path}/figures/heatmap.png')
 
-def records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates):
+def records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path):
     li_df = []
     for definition in definitions:
         df_grouped = df_clean[[definition+'_date',definition]].groupby(definition+'_date').count().reset_index().rename(columns={definition+'_date':'date'}).set_index('date')
@@ -223,7 +223,7 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
     fig.autofmt_xdate()
     sns.lineplot(x = 'date', y = 'value', hue='variable', data = df_all_time, ax=ax).set_title('New records by month')
     ax.legend().set_title('')
-    plt.savefig('output/figures/records_over_time.png')
+    plt.savefig(f'output/{output_path}/figures/records_over_time.png')
 
     for group in demographic_covariates + clinical_covariates:
         for definition in definitions:
@@ -234,9 +234,9 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
             fig.autofmt_xdate()
             sns.lineplot(x = 'date', y = definition, hue=group, data = df_time, ax=ax).set_title(f'{definition} recorded by {group} and month')
             ax.legend().set_title('')
-            plt.savefig(f'output/figures/records_over_time_{definition}_{group}.png')
+            plt.savefig(f'output/{output_path}/figures/records_over_time_{definition}_{group}.png')
             
-def report_distribution(df_occ, definitions, num_definitions, group=''):
+def report_distribution(df_occ, definitions, num_definitions, output_path, group=''):
     """
     Plots histogram or boxplots of distribution
     """
@@ -253,13 +253,13 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
                     avg_value.loc['count'][0] = 5 * round(avg_value.loc['count'][0]/5)
                     print(f'Average {definition}:\n')
                     #display(avg_value)
-                    avg_value.to_csv(f'output/tables/avg_value_{definition}.csv')
+                    avg_value.to_csv(f'output/{output_path}/tables/avg_value_{definition}.csv')
                     fig, ax = plt.subplots(figsize=(12, 8))
                     hist_data = df_occ[definition].loc[~df_occ[definition].isna()]
                     plt.hist(hist_data, bins=np.arange(min(hist_data), max(hist_data)))
                     plt.title('Distribution of ' + definition)
                     #plt.show()
-                    plt.savefig('output/figures/distribution.png')
+                    plt.savefig(f'output/{output_path}/figures/distribution.png')
                 else:
                     print('Table and plot redacted due to low counts.')
                     
@@ -273,12 +273,12 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
                 avg_value['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
             print('Averages:\n')
             #display(avg_value)
-            avg_value.to_csv('output/tables/avg_value.csv')
+            avg_value.to_csv(f'output/{output_path}/tables/avg_value.csv')
             fig, ax = plt.subplots(figsize=(12, 8))
             sns.boxplot(data=df_bp,showfliers = False)
             plt.title("Distributions of values")
             #plt.show()
-            plt.savefig('output/figures/distribution.png')
+            plt.savefig(f'output/{output_path}/figures/distribution.png')
     else:
         if num_definitions == 1:
             for definition in definitions: 
@@ -292,13 +292,13 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
                 avg_value.loc[avg_value['count'].isna(), ['count','mean']] = ['-','-']
                 print(f'Averages by {group}:\n')
                 #display(avg_value)    
-                avg_value.to_csv(f'output/tables/avg_value_{definition}_{group}.csv')
+                avg_value.to_csv(f'output/{output_path}/tables/avg_value_{definition}_{group}.csv')
                 null_index = avg_value[avg_value['count'] == '-'].index.tolist()
                 fig, ax = plt.subplots(figsize=(12, 8))
                 sns.boxplot(x=group, y=definition, data=df_bp.loc[~df_bp[group].isin(null_index)], showfliers=False)
                 plt.title(f"Distributions by {group}")
                 #plt.show()
-                plt.savefig(f'output/figures/distribution_{group}.png')
+                plt.savefig(f'output/{output_path}/figures/distribution_{group}.png')
         else:
             if df_occ[group].dtype == 'bool':
                 df_occ[group] = df_occ[group].apply(lambda x: str(x))
@@ -315,7 +315,7 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
                                     ['ct_'+definition,'avg_'+definition]] = ['-','-']
             print(f'Averages by {group}:\n')
             #display(avg_value)
-            avg_value.to_csv(f'output/tables/avg_value_{group}.csv')
+            avg_value.to_csv(f'output/{output_path}/tables/avg_value_{group}.csv')
             for definition in definitions:
                 null_index = []
                 null_index = avg_value[avg_value['ct_'+definition] == '-'].index.tolist()
@@ -325,9 +325,9 @@ def report_distribution(df_occ, definitions, num_definitions, group=''):
             sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
             plt.title(f'Distributions by {group}')
             #plt.show()
-            plt.savefig(f'output/figures/distribution_{group}.png')
+            plt.savefig(f'output/{output_path}/figures/distribution_{group}.png')
             
-def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitions, null, group=''):
+def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitions, null, output_path, group=''):
     """
     Reports number of measurements outside of defined range
     """
@@ -376,7 +376,7 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
     
     if num_definitions == 1:    
         #display(df_out)
-        df_out.to_csv('output/tables/out_of_range.csv')
+        df_out.to_csv(f'output/{output_path}/tables/out_of_range.csv')
         # Remove list from memory
         del li_dfs 
         if group == '': 
@@ -386,7 +386,7 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
                 plt.hist(df_plot)
                 plt.title('Distribution of out of range ' + definition)
                 #plt.show()
-                plt.savefig('output/figures/out_of_range.png')
+                plt.savefig(f'output/{output_path}/figures/out_of_range.png')
             else:
                 print('Plot redacted due to low counts.')
         else:
@@ -400,7 +400,7 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
                     sns.boxplot(x=group, y="oor_" + definition, data=df_bp, showfliers=False)
                     plt.title(f"Distribution of out of range values by {group}")
                     plt.show()
-                    plt.savefig(f'output/figures/out_of_range_{group}.png')
+                    plt.savefig(f'output/{output_path}/figures/out_of_range_{group}.png')
                 else:
                     print('Plot redacted due to low counts.')
     else:
@@ -409,7 +409,7 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
         del li_dfs 
         #display(df_merged)
         if group == '':    
-            df_merged.to_csv('output/tables/out_of_range.csv')
+            df_merged.to_csv(f'output/{output_path}/tables/out_of_range.csv')
             cols = ["oor_" + definition for definition in definitions]
             df_bp = df_oor[cols]
             if df_merged["oor_" + definition]['count'] == '-':
@@ -419,11 +419,11 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
                 sns.boxplot(data=df_bp, showfliers=False)
                 plt.title('Distribution of out of range values')
                 #plt.show()
-                plt.savefig('output/figures/out_of_range.png')
+                plt.savefig(f'output/{output_path}/figures/out_of_range.png')
             except: 
                 print('Plot redacted due to low counts.')
         else:
-            df_merged.to_csv(f'output/tables/out_of_range_{group}.csv')
+            df_merged.to_csv(f'output/{output_path}/tables/out_of_range_{group}.csv')
             df_oor = df_oor.loc[~df_oor[group].isna()]
             for definition in definitions: 
                 null_index = df_merged[df_merged['count_'+definition] == '-'].index.tolist()
@@ -438,11 +438,11 @@ def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitio
                 sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
                 plt.title(f'Distribution of out of range values by {group}')
                 #plt.show()
-                plt.savefig(f'output/figures/out_of_range_{group}.png')
+                plt.savefig(f'output/{output_path}/figures/out_of_range_{group}.png')
             else: 
                 print('Plot redacted due to low counts.')
         
-def report_update_frequency(df_occ, definitions, time_delta, num_definitions, group=''):
+def report_update_frequency(df_occ, definitions, time_delta, num_definitions, output_path, group=''):
     """
     Plots histogram or boxplot of update frequency and reports average update frequency
     """
@@ -457,12 +457,12 @@ def report_update_frequency(df_occ, definitions, time_delta, num_definitions, gr
                     avg_update_freq.loc['count'][0] = 5 * round(avg_update_freq.loc['count'][0]/5)
                     print(f'Average update frequency of {definition} by {time_delta}:\n')
                     #display(avg_update_freq)
-                    avg_update_freq.to_csv(f'output/tables/avg_update_frequency_{definition}.csv')
+                    avg_update_freq.to_csv(f'output/{output_path}/tables/avg_update_frequency_{definition}.csv')
                     fig, ax = plt.subplots(figsize=(12, 8))
                     plt.hist(df_occ['date_diff_' + definition])
                     plt.title('Update frequency of ' + definition + f" by {time_delta}")
                     #plt.show()
-                    plt.savefig(f'output/figures/avg_update_frequency_{definition}.png')
+                    plt.savefig(f'output/{output_path}/figures/avg_update_frequency_{definition}.png')
                 else:
                     print('Table and plot redacted due to low counts.')
         else:
@@ -476,13 +476,13 @@ def report_update_frequency(df_occ, definitions, time_delta, num_definitions, gr
                 avg_update_freq['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
             print(f'Average update frequency by {time_delta}:\n')
             #display(avg_update_freq)    
-            avg_update_freq.to_csv(f'output/tables/avg_update_frequency.csv')
+            avg_update_freq.to_csv(f'output/{output_path}/tables/avg_update_frequency.csv')
             fig, ax = plt.subplots(figsize=(12, 8))
             null_index = avg_update_freq[avg_update_freq['count'] == '-'].index.tolist()
             sns.boxplot(data=df_bp.drop(columns=null_index), showfliers=False)
             plt.title(f"Update frequency by {time_delta}")
             #plt.show()
-            plt.savefig(f'output/figures/avg_update_frequency.png')
+            plt.savefig(f'output/{output_path}/figures/avg_update_frequency.png')
           
     else:
         if num_definitions == 1:
@@ -498,13 +498,13 @@ def report_update_frequency(df_occ, definitions, time_delta, num_definitions, gr
                 avg_update_freq.loc[avg_update_freq['count'].isna(), ['count','avg_diff']] = ['-','-']
                 print(f'Average update frequency by {group} and {time_delta}:\n')
                 #display(avg_update_freq)    
-                avg_update_freq.to_csv(f'output/tables/avg_update_frequency_{definition}.csv')
+                avg_update_freq.to_csv(f'output/{output_path}/tables/avg_update_frequency_{definition}.csv')
                 null_index = avg_update_freq[avg_update_freq['count'] == '-'].index.tolist()
                 fig, ax = plt.subplots(figsize=(12, 8))
                 sns.boxplot(x=group, y='date_diff_'+definition, data=df_bp.loc[~df_bp[group].isin(null_index)].sort_index(), showfliers=False)
                 plt.title(f"Update frequency by {group} and {time_delta}")
                 #plt.show()
-                plt.savefig(f'output/figures/avg_update_frequency_{definition}.png')
+                plt.savefig(f'output/{output_path}/figures/avg_update_frequency_{definition}.png')
         else:
             if df_occ[group].dtype == 'bool':
                 df_occ[group] = df_occ[group].apply(lambda x: str(x))
@@ -523,7 +523,7 @@ def report_update_frequency(df_occ, definitions, time_delta, num_definitions, gr
             # Sort by index
             print(f'Average update frequencies by {time_delta}:\n')
             #display(avg_update_freq)
-            avg_update_freq.to_csv(f'output/tables/avg_update_frequency_{group}.csv')
+            avg_update_freq.to_csv(f'output/{output_path}/tables/avg_update_frequency_{group}.csv')
             for definition in definitions:
                 null_index = []
                 null_index = avg_update_freq[avg_update_freq['ct_date_diff_'+definition] == '-'].index.tolist()
@@ -533,9 +533,9 @@ def report_update_frequency(df_occ, definitions, time_delta, num_definitions, gr
             sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
             plt.title(f'Update frequencies by {group} and {time_delta}')
             #plt.show()
-            plt.savefig(f'output/figures/avg_update_frequency_{group}.png')
+            plt.savefig(f'output/{output_path}/figures/avg_update_frequency_{group}.png')
             
-def latest_common_comparison(df_clean, definitions, other_vars):
+def latest_common_comparison(df_clean, definitions, other_vars, output_path):
     for definition in definitions:
         df_subset = df_clean.loc[~df_clean[definition].isna()]
         df_subset=df_subset[[definition]+other_vars].set_index(definition)
@@ -552,7 +552,7 @@ def latest_common_comparison(df_clean, definitions, other_vars):
         df_diag = pd.DataFrame(df_sum2.sum(axis=1), columns=[f'not_matching (n={df_sum2.sum(axis=1).sum()})'])
         df_out = df_counts.merge(df_diag,right_index=True,left_index=True)
         #display(df_out)
-        df_out.to_csv(f'output/tables/latest_common_simple_{definition}.csv')
+        df_out.to_csv(f'output/{output_path}/tables/latest_common_simple_{definition}.csv')
 
         df_sum = redact_round_table(df_subset_3.groupby(definition).sum())
         df_sum = df_sum.where(~df_sum.isna(), '-')
@@ -560,9 +560,9 @@ def latest_common_comparison(df_clean, definitions, other_vars):
         for col in df_sum.columns:
             df_sum = df_sum.rename(columns = {col:f'{col} (n={df_sum[col].sum()})'})
         #display(df_sum)
-        df_sum.to_csv(f'output/tables/latest_common_expanded_{definition}.csv')
+        df_sum.to_csv(f'output/{output_path}/tables/latest_common_expanded_{definition}.csv')
             
-def state_change(df_clean, definitions, other_vars):
+def state_change(df_clean, definitions, other_vars, output_path):
     for definition in definitions:
         df_subset = df_clean[
             [definition]+other_vars
@@ -579,4 +579,4 @@ def state_change(df_clean, definitions, other_vars):
         df_out = df_out.where(~df_out.isna(), '-')
     
         #display(df_out)
-        df_out.to_csv(f'output/tables/state_change_{definition}.csv')
+        df_out.to_csv(f'output/{output_path}/tables/state_change_{definition}.csv')
