@@ -18,7 +18,7 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 input_path = 'output/data/input_processed.feather'
 
 # Definitions
-definitions = ['derived_bmi', 'computed_bmi', 'recorded_bmi']
+definitions = ['backend_bmi', 'computed_bmi', 'derived_bmi', 'recorded_bmi']
 
 # Code dictionary
 code_dict = {
