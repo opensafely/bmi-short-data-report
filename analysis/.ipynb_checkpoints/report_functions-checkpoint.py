@@ -589,7 +589,7 @@ def report_update_frequency(df_occ, definitions, time_delta, num_definitions, gr
             sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
             plt.title(f'Update frequencies by {group} and {time_delta}')
             #plt.show()
-            plt.savefig('output/figures/avg_update_frequency_{group}.png')
+            plt.savefig(f'output/figures/avg_update_frequency_{group}.png')
             
 def latest_common_comparison(df_clean, definitions, other_vars):
     for definition in definitions:
