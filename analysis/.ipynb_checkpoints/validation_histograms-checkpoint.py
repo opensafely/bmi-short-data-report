@@ -137,20 +137,25 @@ def import_clean(input_path, definitions, other_vars, demographic_covariates,
     return df_clean
 
 def hist(df_in, measure, title, path):
-    # 10 bins
+    # 30 bins
     try: 
-        df_hist = pd.DataFrame(pd.cut(df_in[measure], 10).value_counts().sort_index()).reset_index().rename(columns={'index':'intervals'})
-        plt.hist(df_in[measure], 10)
+        df_hist = pd.DataFrame(pd.cut(df_in[measure], 30).value_counts().sort_index()).reset_index().rename(columns={'index':'intervals'})
+        df_in['bin']=pd.cut(df_in[measure], bins = 30).astype(str)
+        df_in2 = df_in.groupby('bin').bin.count()
+        # Fixed to show distribution of bin
+        df_in2.plot(kind='bar')
         plt.title(title)
         df_hist.to_csv(f'output/{output_path}/tables/hist_data_{path}.csv')
-        plt.savefig(f'output/{output_path}/figures/hist_{path}.png')
+        plt.savefig(f'output/{output_path}/figures/hist_{path}.png', bbox_inches="tight")
     except:
         pass
     
 def q_n(x, pct):
     return x.quantile(pct)
 
-def subset_q(df_clean, measure, pct, less=True):
+def subset_q(df_in, measure, pct, less=True):
+    # Drop the top 5 highest in measure (outliers)
+    df_clean = df_in.loc[~df_in[measure].isin(df_in[measure].nlargest(n=5).tolist())]
     if pct < 1:
         p = q_n(df_clean[measure], pct)
     else:
