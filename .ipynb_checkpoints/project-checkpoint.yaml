@@ -62,3 +62,11 @@ actions:
     outputs:
       moderately_sensitive:
         notebook: output/report_weight.html
+        
+  generate_histograms:
+    run: python:latest python analysis/validation_histograms.py
+    needs: [preprocess_inputs]
+    outputs:
+      moderately_sensitive: 
+        tables: output/histograms/tables/*.csv
+        figures: output/histograms/figures/*.png
