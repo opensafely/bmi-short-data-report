@@ -86,3 +86,10 @@ actions:
       moderately_sensitive: 
         tables: output/histograms/tables/*.csv
         figures: output/histograms/figures/*.png
+  
+  generate_report_eventcounts:
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_event_counts.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [generate_event_counts]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_event_counts.html
