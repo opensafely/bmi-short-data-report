@@ -76,7 +76,6 @@ actions:
       moderately_sensitive: 
         tables1: output/histograms/tables/hist*.csv
         tables2: output/histograms/tables/dec*.csv
-        tables3: output/histograms/tables/kde*.csv
         figures1: output/histograms/figures/hist*.png
         figures2: output/histograms/figures/dec*.png
         figures3: output/histograms/figures/kde*.png
