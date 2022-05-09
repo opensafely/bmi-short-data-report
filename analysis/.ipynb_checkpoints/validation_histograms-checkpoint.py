@@ -109,57 +109,72 @@ def subset_q(df_in, measure, pct, less=True):
         df_p = df_clean.loc[df_clean[measure] > p]
     return df_p
 
+def kde_plot(df_in, measure, title, path):
+    try:
+        df_kde = pd.DataFrame(df_in[measure])
+        df_kde.plot.kde()
+        plt.title(title)
+        plt.savefig(f'output/{output_path}/figures/kde_{path}.png', bbox_inches="tight")
+    except:
+        pass
+
 ########################## SPECIFY ANALYSES TO RUN HERE ##############################
 
 def main():
     df_clean = import_clean(input_path, definitions, other_vars, demographic_covariates, 
                             clinical_covariates, null, date_min, date_max, 
                             time_delta, output_path, code_dict, dates)
-    
+    # Get rid of 0s in weight/height
+    for v in ['height_backend','weight_backend']:
+        # Set null values to nan
+        df_clean.loc[df_clean[v].isin(null), v] = np.nan
     ### Create histograms
     # All population
     hist(df_clean, 'weight_backend', 'Weight (CTV3 Codes Used in OpenSAFELY-TPP Backend)', 'weight_all')
     hist(df_clean, 'height_backend', 'Height (CTV3 Codes Used in OpenSAFELY-TPP Backend)', 'height_all')
-    # Lowest 5%
-    df_p5 = subset_q(df_clean, 'backend_bmi', 0.05)
-    hist(df_p5, 'weight_backend', 'Weight for Patients with 5% Lowest BMI', 'weight_p5')
-    hist(df_p5, 'height_backend', 'Height for Patients with 5% Lowest BMI', 'height_p5')
-    # Highest 5%
-    df_p95 = subset_q(df_clean, 'backend_bmi', 0.95, less=False)
-    hist(df_p95, 'weight_backend', 'Weight for Patients with 5% Highest BMI', 'weight_p95')
-    hist(df_p95, 'height_backend', 'Height for Patients with 5% Highest BMI', 'height_p95')
-    # Lower than minimum expected range
-    df_min = subset_q(df_clean, 'backend_bmi', 4)
-    hist(df_min, 'weight_backend', 'Weight for Patients with BMI < 4', 'weight_lt_min')
-    hist(df_min, 'height_backend', 'Height for Patients with BMI < 4', 'height_lt_min')
-    # Higher than maximum expected range
-    df_max = subset_q(df_clean, 'backend_bmi', 200, False)
-    hist(df_max, 'weight_backend', 'Weight for Patients with BMI > 200', 'weight_gt_max')
-    hist(df_max, 'height_backend', 'Height for Patients with BMI > 200', 'height_gt_max')
     # Histogram of negative values
     df_height_neg = df_clean.loc[df_clean['height_backend'] < 0]
     hist(df_height_neg, 'height_backend', 'Distribution of Negative Heights', 'height_negative')
     df_weight_neg = df_clean.loc[df_clean['weight_backend'] < 0]
     hist(df_weight_neg, 'weight_backend', 'Distribution of Negative Weights', 'weight_negative')
+    # Reasonable height (considering cm/in measurements)
+    df_height_bound = df_clean.loc[(df_clean['height_backend'] > 0) & (df_clean['height_backend'] < 250)]
+    hist(df_height_bound, 'height_backend', 'Distribution of Height Between 0 and 250', 'height_bound')
+    # Reasonable weight (considering stone/lbs)
+    df_weight_bound = df_clean.loc[(df_clean['weight_backend'] > 0) & (df_clean['weight_backend'] < 500)]
+    hist(df_weight_bound, 'weight_backend', 'Distribution of Weight Between 0 and 500', 'weight_bound')
+    # Above reasonable range
+    df_height_gt = subset_q(df_clean, 'height_backend', 250, less=False)
+    hist(df_height_gt, 'height_backend', 'Distribution of Height Above 250', 'height_gt_bound')
+    df_weight_gt = subset_q(df_clean, 'weight_backend', 500, less=False)
+    hist(df_weight_gt, 'weight_backend', 'Distribution of Weight Above 500', 'weight_gt_bound')
     ### Create decile plots
     # All population
     decile_plot(df_clean, 'weight_backend', 'Weight (CTV3 Codes Used in OpenSAFELY-TPP Backend)', 'weight_all')
     decile_plot(df_clean, 'height_backend', 'Height (CTV3 Codes Used in OpenSAFELY-TPP Backend)', 'height_all')
-    # Lowest 5%
-    decile_plot(df_p5, 'weight_backend', 'Weight for Patients with 5% Lowest BMI', 'weight_p5')
-    decile_plot(df_p5, 'height_backend', 'Height for Patients with 5% Lowest BMI', 'height_p5')
-    # Highest 5%
-    decile_plot(df_p95, 'weight_backend', 'Weight for Patients with 5% Highest BMI', 'weight_p95')
-    decile_plot(df_p95, 'height_backend', 'Height for Patients with 5% Highest BMI', 'height_p95')
-    # Lower than minimum expected range
-    decile_plot(df_min, 'weight_backend', 'Weight for Patients with BMI < 4', 'weight_lt_min')
-    decile_plot(df_min, 'height_backend', 'Height for Patients with BMI < 4', 'height_lt_min')
-    # Higher than maximum expected range
-    decile_plot(df_max, 'weight_backend', 'Weight for Patients with BMI > 200', 'weight_gt_max')
-    decile_plot(df_max, 'height_backend', 'Height for Patients with BMI > 200', 'height_gt_max')
     # Negative values
     decile_plot(df_height_neg, 'height_backend', 'Distribution of Negative Heights', 'height_negative')
     decile_plot(df_weight_neg, 'weight_backend', 'Distribution of Negative Weights', 'weight_negative')
+    # Reasonable height (considering cm/in measurements)
+    decile_plot(df_height_bound, 'height_backend', 'Distribution of Height Between 0 and 250', 'height_bound')
+    # Reasonable weight (considering stone/lbs)
+    decile_plot(df_weight_bound, 'weight_backend', 'Distribution of Weight Between 0 and 500', 'weight_bound')
+    # Above reasonable range
+    decile_plot(df_height_gt, 'height_backend', 'Distribution of Height Above 250', 'height_gt_bound')
+    decile_plot(df_weight_gt, 'weight_backend', 'Distribution of Weight Above 500', 'weight_gt_bound')
+    ### Create KDE plots
+    # All population
+    kde_plot(df_clean, 'height_backend', 'Height (CTV3  Codes Used in OpenSAFELY-TPP Backend)', 'height_all')
+    kde_plot(df_clean, 'weight_backend', 'Weight (CTV3  Codes Used in OpenSAFELY-TPP Backend)', 'weight_all')
+    # Negative Values
+    kde_plot(df_height_neg, 'height_backend', 'Distribution of Negative Heights', 'height_negative')
+    kde_plot(df_weight_neg, 'weight_backend', 'Distribution of Negative Weights', 'weight_negative')
+    # Reasonable height/weight
+    kde_plot(df_height_bound, 'height_backend', 'Distribution of Height Between 0 and 250', 'height_bound')
+    kde_plot(df_weight_bound, 'weight_backend', 'Distribution of Weight Between 0 and 500', 'weight_bound')
+    # Above reasonable range
+    kde_plot(df_height_gt, 'height_backend', 'Distribution of Height Above 250', 'height_gt_bound')
+    kde_plot(df_weight_gt, 'weight_backend', 'Distribution of Weight Above 500', 'weight_gt_bound')
     
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
