@@ -5,6 +5,12 @@ expectations:
 
 actions:
 
+  generate_event_counts:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_eventcounts --output-dir=output/data --output-format feather
+    outputs:
+      highly_sensitive:
+        cohort: output/data/input_eventcounts.feather
+
   generate_study_population:
     run: cohortextractor:latest generate_cohort --study-definition study_definition --output-dir=output/data --output-format feather
     outputs:
@@ -70,8 +76,10 @@ actions:
       moderately_sensitive: 
         tables1: output/histograms/tables/hist*.csv
         tables2: output/histograms/tables/dec*.csv
+        tables3: output/histograms/tables/kde*.csv
         figures1: output/histograms/figures/hist*.png
         figures2: output/histograms/figures/dec*.png
+        figures3: output/histograms/figures/kde*.png
 
   execute_validation_recency:
     run: python:latest python analysis/validation_recency.py
@@ -80,3 +88,20 @@ actions:
       moderately_sensitive: 
         tables: output/histograms/tables/*.csv
         figures: output/histograms/figures/*.png
+  
+  generate_report_eventcounts:
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_event_counts.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [generate_event_counts]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_event_counts.html
+
+  generate_dataset_report:
+    run: >
+      dataset-report:v0.0.3
+        --input-files output/data/input.feather
+        --output-dir output/data
+    needs: [generate_study_population]
+    outputs:
+      moderately_sensitive:
+        dataset_report: output/data/input.md
