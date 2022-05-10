@@ -66,6 +66,8 @@ def hist(df_in, measure, title, path):
         df_hist = pd.DataFrame(pd.cut(df_in[measure], 30).value_counts().sort_index()).reset_index().rename(columns={'index':'intervals'})
         df_hist[measure] = df_hist[measure].where(
             df_hist[measure]> 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
+        # remove NaN bin
+        df_hist = df_hist.loc[~df_hist['intervals'].isna()]
         df_hist.plot(kind='bar', x='intervals', y=measure)
         plt.title(title)
         df_hist.to_csv(f'output/{output_path}/tables/hist_data_{path}.csv')
