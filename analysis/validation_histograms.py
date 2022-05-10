@@ -87,24 +87,19 @@ def hist(df_in, measure, title, path, n_bins=30):
     try:
         df_measure = df_in[measure]
         nan_count = df_measure.isna().sum()
-        counts, bins = np.histogram(
-            df_measure[df_measure.notna()],
-            bins=n_bins)
-        formatted_bins = [
-            f"{b} - {bins[i+1]}" for i, b in enumerate(bins[:-1])
-        ]
+        counts, bins = np.histogram(df_measure[df_measure.notna()], bins=n_bins)
+        formatted_bins = [f"{b} - {bins[i+1]}" for i, b in enumerate(bins[:-1])]
         df_hist = pd.DataFrame({"bins": formatted_bins, "counts": counts})
-        df_hist['counts'] = redact_round_table2(df_hist['counts'])
+        df_hist["counts"] = redact_round_table2(df_hist["counts"])
         plt.hist(bins[:-1], bins, weights=counts)
         plt.title(title)
         plt.savefig(
-            f"output/{output_path}/figures/hist_{path}.png",
-            bbox_inches="tight",
+            f"output/{output_path}/figures/hist_{path}.png", bbox_inches="tight",
         )
         plt.close()
         df_hist = pd.concat(
-            [df_hist,
-             pd.DataFrame({"bins": "NaN", "counts": nan_count}, index=[0])]).reset_index()
+            [df_hist, pd.DataFrame({"bins": "NaN", "counts": nan_count}, index=[0])]
+        ).reset_index()
         df_hist.to_csv(f"output/{output_path}/tables/hist_data_{path}.csv")
     except Exception as e:
         print(
@@ -130,16 +125,13 @@ def decile_plot(df_in, measure, title, path):
             .where(df_dec[measure] > 5, np.nan)
             .apply(lambda x: 5 * round(x / 5) if ~np.isnan(x) else x)
         )
-        df_in["bin"] = pd.qcut(df_in[measure], 10, duplicates="drop").astype(
-            str
-        )
+        df_in["bin"] = pd.qcut(df_in[measure], 10, duplicates="drop").astype(str)
         df_in2 = redact_round_table2(df_in.groupby("bin").bin.count())
         df_in2.plot(kind="bar")
         plt.title(title)
         df_dec.to_csv(f"output/{output_path}/tables/decile_plot_{path}.csv")
         plt.savefig(
-            f"output/{output_path}/figures/decile_plot_{path}.png",
-            bbox_inches="tight",
+            f"output/{output_path}/figures/decile_plot_{path}.png", bbox_inches="tight",
         )
         plt.close()
     except:
@@ -147,35 +139,52 @@ def decile_plot(df_in, measure, title, path):
 
 
 def q_n(x, pct):
+    """
+    Returns the value at the given quantile
+    """
     return x.quantile(pct)
 
 
-def subset_q(df_in, measure, pct, less=True):
-    # Drop the top 5 highest in measure (outliers)
-    df_clean = df_in.loc[
-        ~df_in[measure].isin(df_in[measure].nlargest(n=5).tolist())
-    ]
-    if pct < 1:
-        p = q_n(df_clean[measure], pct)
+def subset_q(df_in, measure, threshold, less=True):
+    """
+    Subsets the data based on numeric threshold
+    """
+    if less == True:
+        df_subset = df_in.loc[df_in[measure] < threshold]
     else:
-        p = pct
-    if less:
-        df_p = df_clean.loc[df_clean[measure] < p]
-    else:
-        df_p = df_clean.loc[df_clean[measure] > p]
-    return df_p
+        df_subset = df_in.loc[df_in[measure] > threshold]
+    return df_subset
 
 
-def kde_plot(df_in, measure, title, path):
-    try:
-        df_kde = pd.DataFrame(df_in[measure])
-        df_kde.plot.kde()
-        plt.title(title)
-        plt.savefig(
-            f"output/{output_path}/figures/kde_{path}.png", bbox_inches="tight"
-        )
-    except:
-        pass
+def count_table(df_in, measure, path):
+    """
+    Counts and outputs the number of non-NA rows
+    """
+    ct_table = pd.DataFrame(df_in[[measure]].count(), columns=["counts"])
+    ct_table.to_csv(f"output/{output_path}/tables/ct_{path}.csv")
+
+
+def cdf(df_in, measure, path):
+    """
+    Computes and plots the cumulative distribution function (CDF)
+    """
+    # Frequency
+    df_stats = df_in[[measure]]
+    df_freq = (
+        df_stats.groupby(measure)[measure]
+        .agg("count")
+        .pipe(pd.DataFrame)
+        .rename(columns={measure: "frequency"})
+    )
+    # PDF
+    df_freq["pdf"] = df_freq["frequency"] / sum(df_freq["frequency"])
+    # CDF
+    df_freq["cdf"] = df_freq["pdf"].cumsum()
+    df_freq = df_freq.reset_index()
+    df_freq.plot(x=measure, y="cdf", grid=True)
+    plt.title(f"CDF of {measure}")
+    plt.savefig(f"output/{output_path}/figures/cdf_{path}.png", bbox_inches="tight")
+    plt.close()
 
 
 ###################### SPECIFY ANALYSES TO RUN HERE ########################
@@ -200,180 +209,59 @@ def main():
     for v in ["height_backend", "weight_backend"]:
         # Set null values to nan
         df_clean.loc[df_clean[v].isin(null), v] = np.nan
-    ## Create histograms
-    # All population
-    hist(
-        df_clean,
-        "weight_backend",
-        "Weight (CTV3 Codes Used in OpenSAFELY-TPP Backend)",
-        "weight_all",
-    )
-    hist(
-        df_clean,
-        "height_backend",
-        "Height (CTV3 Codes Used in OpenSAFELY-TPP Backend)",
-        "height_all",
-    )
-    # Histogram of negative values
+    # Count negative values
     df_height_neg = df_clean.loc[df_clean["height_backend"] < 0]
-    hist(
-        df_height_neg,
-        "height_backend",
-        "Distribution of Negative Heights",
-        "height_negative",
-    )
+    count_table(df_height_neg, "height_backend", "neg_height")
     df_weight_neg = df_clean.loc[df_clean["weight_backend"] < 0]
-    hist(
-        df_weight_neg,
-        "weight_backend",
-        "Distribution of Negative Weights",
-        "weight_negative",
-    )
-    # Reasonable height (considering cm/in measurements)
-    df_height_bound = df_clean.loc[
-        (df_clean["height_backend"] > 0) & (df_clean["height_backend"] < 250)
+    count_table(df_weight_neg, "weight_backend", "neg_weight")
+    # Count high, unreasonable values
+    df_height_gt = subset_q(df_clean, "height_backend", 250, less=False)
+    count_table(df_height_gt, "height_backend", "high_height")
+    df_weight_gt = subset_q(df_clean, "weight_backend", 500, less=False)
+    count_table(df_weight_gt, "weight_backend", "high_weight")
+    # Create datasets for reasonable ranges
+    # Height (0-3; meters)
+    df_height_m = df_clean.loc[
+        (df_clean["height_backend"] > 0) & (df_clean["height_backend"] < 3)
     ]
-    hist(
-        df_height_bound,
-        "height_backend",
-        "Distribution of Height Between 0 and 250",
-        "height_bound",
-    )
-    # Reasonable weight (considering stone/lbs)
+    # Height (10-300; cm)
+    df_height_cm = df_clean.loc[
+        (df_clean["height_backend"] > 10) & (df_clean["height_backend"] < 300)
+    ]
+    # Weight (0-500; should cover most kg and lbs)
     df_weight_bound = df_clean.loc[
         (df_clean["weight_backend"] > 0) & (df_clean["weight_backend"] < 500)
     ]
-    hist(
-        df_weight_bound,
-        "weight_backend",
-        "Distribution of Weight Between 0 and 500",
-        "weight_bound",
-    )
-    # Above reasonable range
-    df_height_gt = subset_q(df_clean, "height_backend", 250, less=False)
-    hist(
-        df_height_gt,
-        "height_backend",
-        "Distribution of Height Above 250",
-        "height_gt_bound",
-    )
-    df_weight_gt = subset_q(df_clean, "weight_backend", 500, less=False)
-    hist(
-        df_weight_gt,
-        "weight_backend",
-        "Distribution of Weight Above 500",
-        "weight_gt_bound",
-    )
-    ## Create decile plots
-    # All population
-    decile_plot(
-        df_clean,
-        "weight_backend",
-        "Weight (CTV3 Codes Used in OpenSAFELY-TPP Backend)",
-        "weight_all",
-    )
-    decile_plot(
-        df_clean,
-        "height_backend",
-        "Height (CTV3 Codes Used in OpenSAFELY-TPP Backend)",
-        "height_all",
-    )
-    # Negative values
-    decile_plot(
-        df_height_neg,
-        "height_backend",
-        "Distribution of Negative Heights",
-        "height_negative",
-    )
-    decile_plot(
-        df_weight_neg,
-        "weight_backend",
-        "Distribution of Negative Weights",
-        "weight_negative",
-    )
+    ### Create histograms
     # Reasonable height (considering cm/in measurements)
-    decile_plot(
-        df_height_bound,
+    hist(
+        df_height_m,
         "height_backend",
-        "Distribution of Height Between 0 and 250",
-        "height_bound",
+        "Distribution of Height Between 0 and 3 (meters)",
+        "height_meter_range",
+    )
+    hist(
+        df_height_cm,
+        "height_backend",
+        "Distribution of Height Between 0 and 3 (meters)",
+        "height_cm_range",
     )
     # Reasonable weight (considering stone/lbs)
-    decile_plot(
+    hist(
         df_weight_bound,
         "weight_backend",
         "Distribution of Weight Between 0 and 500",
         "weight_bound",
     )
-    # Above reasonable range
-    decile_plot(
-        df_height_gt,
-        "height_backend",
-        "Distribution of Height Above 250",
-        "height_gt_bound",
-    )
-    decile_plot(
-        df_weight_gt,
-        "weight_backend",
-        "Distribution of Weight Above 500",
-        "weight_gt_bound",
-    )
-    ## Create KDE plots
-    # All population
-    kde_plot(
-        df_clean,
-        "height_backend",
-        "Height (CTV3  Codes Used in OpenSAFELY-TPP Backend)",
-        "height_all",
-    )
-    kde_plot(
-        df_clean,
-        "weight_backend",
-        "Weight (CTV3  Codes Used in OpenSAFELY-TPP Backend)",
-        "weight_all",
-    )
-    # Negative Values
-    kde_plot(
-        df_height_neg,
-        "height_backend",
-        "Distribution of Negative Heights",
-        "height_negative",
-    )
-    kde_plot(
-        df_weight_neg,
-        "weight_backend",
-        "Distribution of Negative Weights",
-        "weight_negative",
-    )
-    # Reasonable height/weight
-    kde_plot(
-        df_height_bound,
-        "height_backend",
-        "Distribution of Height Between 0 and 250",
-        "height_bound",
-    )
-    kde_plot(
-        df_weight_bound,
-        "weight_backend",
-        "Distribution of Weight Between 0 and 500",
-        "weight_bound",
-    )
-    # Above reasonable range
-    kde_plot(
-        df_height_gt,
-        "height_backend",
-        "Distribution of Height Above 250",
-        "height_gt_bound",
-    )
-    kde_plot(
-        df_weight_gt,
-        "weight_backend",
-        "Distribution of Weight Above 500",
-        "weight_gt_bound",
-    )
+    ### Create CDFs
+    # Reasonable height (considering cm/in measurements)
+    cdf(df_height_m, "height_backend", "height_meter_range")
+    cdf(df_height_cm, "height_backend", "height_cm_range")
+    # Reasonable weight (considering stone/lbs)
+    cdf(df_weight_bound, "weight_backend", "weight_bound")
 
 
-######################## DO NOT EDIT – RUNS SCRIPT ###########################
+########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
 if __name__ == "__main__":
     main()

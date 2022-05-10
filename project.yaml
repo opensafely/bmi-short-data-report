@@ -75,11 +75,10 @@ actions:
     outputs:
       moderately_sensitive: 
         tables1: output/histograms/tables/hist*.csv
-        tables2: output/histograms/tables/dec*.csv
+        tables2: output/histograms/tables/ct*.csv
         figures1: output/histograms/figures/hist*.png
-        figures2: output/histograms/figures/dec*.png
-        figures3: output/histograms/figures/kde*.png
-
+        figures2: output/histograms/figures/cdf*.png
+ 
   execute_validation_recency:
     run: python:latest python analysis/validation_recency.py
     needs: [preprocess_inputs]
