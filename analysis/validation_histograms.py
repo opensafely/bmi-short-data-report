@@ -87,24 +87,19 @@ def hist(df_in, measure, title, path, n_bins=30):
     try:
         df_measure = df_in[measure]
         nan_count = df_measure.isna().sum()
-        counts, bins = np.histogram(
-            df_measure[df_measure.notna()],
-            bins=n_bins)
-        formatted_bins = [
-            f"{b} - {bins[i+1]}" for i, b in enumerate(bins[:-1])
-        ]
+        counts, bins = np.histogram(df_measure[df_measure.notna()], bins=n_bins)
+        formatted_bins = [f"{b} - {bins[i+1]}" for i, b in enumerate(bins[:-1])]
         df_hist = pd.DataFrame({"bins": formatted_bins, "counts": counts})
-        df_hist['counts'] = redact_round_table2(df_hist['counts'])
+        df_hist["counts"] = redact_round_table2(df_hist["counts"])
         plt.hist(bins[:-1], bins, weights=counts)
         plt.title(title)
         plt.savefig(
-            f"output/{output_path}/figures/hist_{path}.png",
-            bbox_inches="tight",
+            f"output/{output_path}/figures/hist_{path}.png", bbox_inches="tight",
         )
         plt.close()
         df_hist = pd.concat(
-            [df_hist,
-             pd.DataFrame({"bins": "NaN", "counts": nan_count}, index=[0])]).reset_index()
+            [df_hist, pd.DataFrame({"bins": "NaN", "counts": nan_count}, index=[0])]
+        ).reset_index()
         df_hist.to_csv(f"output/{output_path}/tables/hist_data_{path}.csv")
     except Exception as e:
         print(
@@ -130,16 +125,13 @@ def decile_plot(df_in, measure, title, path):
             .where(df_dec[measure] > 5, np.nan)
             .apply(lambda x: 5 * round(x / 5) if ~np.isnan(x) else x)
         )
-        df_in["bin"] = pd.qcut(df_in[measure], 10, duplicates="drop").astype(
-            str
-        )
+        df_in["bin"] = pd.qcut(df_in[measure], 10, duplicates="drop").astype(str)
         df_in2 = redact_round_table2(df_in.groupby("bin").bin.count())
         df_in2.plot(kind="bar")
         plt.title(title)
         df_dec.to_csv(f"output/{output_path}/tables/decile_plot_{path}.csv")
         plt.savefig(
-            f"output/{output_path}/figures/decile_plot_{path}.png",
-            bbox_inches="tight",
+            f"output/{output_path}/figures/decile_plot_{path}.png", bbox_inches="tight",
         )
         plt.close()
     except:
@@ -152,38 +144,46 @@ def q_n(x, pct):
     """
     return x.quantile(pct)
 
+
 def subset_q(df_in, measure, threshold, less=True):
     """
     Subsets the data based on numeric threshold
     """
     if less == True:
         df_subset = df_in.loc[df_in[measure] < threshold]
-    else: 
+    else:
         df_subset = df_in.loc[df_in[measure] > threshold]
     return df_subset
+
 
 def count_table(df_in, measure, path):
     """
     Counts and outputs the number of non-NA rows
     """
-    ct_table = pd.DataFrame(df_in[[measure]].count(), columns=['counts'])
-    ct_table.to_csv(f'output/{output_path}/tables/ct_{path}.csv')
-    
+    ct_table = pd.DataFrame(df_in[[measure]].count(), columns=["counts"])
+    ct_table.to_csv(f"output/{output_path}/tables/ct_{path}.csv")
+
+
 def cdf(df_in, measure, path):
     """
     Computes and plots the cumulative distribution function (CDF)
     """
-    # Frequency 
+    # Frequency
     df_stats = df_in[[measure]]
-    df_freq = df_stats.groupby(measure)[measure].agg('count').pipe(pd.DataFrame).rename(columns = {measure: 'frequency'})
+    df_freq = (
+        df_stats.groupby(measure)[measure]
+        .agg("count")
+        .pipe(pd.DataFrame)
+        .rename(columns={measure: "frequency"})
+    )
     # PDF
-    df_freq['pdf'] = df_freq['frequency'] / sum(df_freq['frequency'])
+    df_freq["pdf"] = df_freq["frequency"] / sum(df_freq["frequency"])
     # CDF
-    df_freq['cdf'] = df_freq['pdf'].cumsum()
+    df_freq["cdf"] = df_freq["pdf"].cumsum()
     df_freq = df_freq.reset_index()
-    df_freq.plot(x = measure, y = 'cdf', grid = True)
-    plt.title(f'CDF of {measure}')
-    plt.savefig(f'output/{output_path}/figures/cdf_{path}.png', bbox_inches="tight")
+    df_freq.plot(x=measure, y="cdf", grid=True)
+    plt.title(f"CDF of {measure}")
+    plt.savefig(f"output/{output_path}/figures/cdf_{path}.png", bbox_inches="tight")
     plt.close()
 
 
@@ -210,34 +210,56 @@ def main():
         # Set null values to nan
         df_clean.loc[df_clean[v].isin(null), v] = np.nan
     # Count negative values
-    df_height_neg = df_clean.loc[df_clean['height_backend'] < 0]
-    count_table(df_height_neg, 'height_backend', 'neg_height')
-    df_weight_neg = df_clean.loc[df_clean['weight_backend'] < 0]
-    count_table(df_weight_neg, 'weight_backend', 'neg_weight')
+    df_height_neg = df_clean.loc[df_clean["height_backend"] < 0]
+    count_table(df_height_neg, "height_backend", "neg_height")
+    df_weight_neg = df_clean.loc[df_clean["weight_backend"] < 0]
+    count_table(df_weight_neg, "weight_backend", "neg_weight")
     # Count high, unreasonable values
-    df_height_gt = subset_q(df_clean, 'height_backend', 250, less=False)
-    count_table(df_height_gt, 'height_backend', 'high_height')
-    df_weight_gt = subset_q(df_clean, 'weight_backend', 500, less=False)
-    count_table(df_weight_gt,'weight_backend', 'high_weight')
-    # Create datasets for reasonable ranges 
+    df_height_gt = subset_q(df_clean, "height_backend", 250, less=False)
+    count_table(df_height_gt, "height_backend", "high_height")
+    df_weight_gt = subset_q(df_clean, "weight_backend", 500, less=False)
+    count_table(df_weight_gt, "weight_backend", "high_weight")
+    # Create datasets for reasonable ranges
     # Height (0-3; meters)
-    df_height_m = df_clean.loc[(df_clean['height_backend'] > 0) & (df_clean['height_backend'] < 3)]
+    df_height_m = df_clean.loc[
+        (df_clean["height_backend"] > 0) & (df_clean["height_backend"] < 3)
+    ]
     # Height (10-300; cm)
-    df_height_cm = df_clean.loc[(df_clean['height_backend'] > 10) & (df_clean['height_backend'] < 300)]
+    df_height_cm = df_clean.loc[
+        (df_clean["height_backend"] > 10) & (df_clean["height_backend"] < 300)
+    ]
     # Weight (0-500; should cover most kg and lbs)
-    df_weight_bound = df_clean.loc[(df_clean['weight_backend'] > 0) & (df_clean['weight_backend'] < 500)]
+    df_weight_bound = df_clean.loc[
+        (df_clean["weight_backend"] > 0) & (df_clean["weight_backend"] < 500)
+    ]
     ### Create histograms
     # Reasonable height (considering cm/in measurements)
-    hist(df_height_m, 'height_backend', 'Distribution of Height Between 0 and 3 (meters)', 'height_meter_range')
-    hist(df_height_cm, 'height_backend', 'Distribution of Height Between 0 and 3 (meters)', 'height_cm_range')
+    hist(
+        df_height_m,
+        "height_backend",
+        "Distribution of Height Between 0 and 3 (meters)",
+        "height_meter_range",
+    )
+    hist(
+        df_height_cm,
+        "height_backend",
+        "Distribution of Height Between 0 and 3 (meters)",
+        "height_cm_range",
+    )
     # Reasonable weight (considering stone/lbs)
-    hist(df_weight_bound, 'weight_backend', 'Distribution of Weight Between 0 and 500', 'weight_bound')
+    hist(
+        df_weight_bound,
+        "weight_backend",
+        "Distribution of Weight Between 0 and 500",
+        "weight_bound",
+    )
     ### Create CDFs
     # Reasonable height (considering cm/in measurements)
-    cdf(df_height_m, 'height_backend', 'height_meter_range')
-    cdf(df_height_cm, 'height_backend', 'height_cm_range')
+    cdf(df_height_m, "height_backend", "height_meter_range")
+    cdf(df_height_cm, "height_backend", "height_cm_range")
     # Reasonable weight (considering stone/lbs)
-    cdf(df_weight_bound, 'weight_backend', 'weight_bound')
+    cdf(df_weight_bound, "weight_backend", "weight_bound")
+
 
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
