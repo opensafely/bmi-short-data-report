@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sys import stderr
 from matplotlib import pyplot as plt
 from lib_phenotype_validation import import_clean
 
@@ -61,7 +62,12 @@ null = ["0", 0, np.nan]
 
 # Covariates
 demographic_covariates = ["age_band", "sex", "ethnicity", "region", "imd"]
-clinical_covariates = ["dementia", "diabetes", "hypertension", "learning_disability"]
+clinical_covariates = [
+    "dementia",
+    "diabetes",
+    "hypertension",
+    "learning_disability",
+]
 
 # Output path
 output_path = "histograms"
@@ -77,30 +83,35 @@ def redact_round_table2(df_in):
     return df_out
 
 
-def hist(df_in, measure, title, path):
-    # 30 bins
+def hist(df_in, measure, title, path, n_bins=30):
     try:
-        df_hist = (
-            pd.DataFrame(pd.cut(df_in[measure], 30).value_counts().sort_index())
-            .reset_index()
-            .rename(columns={"index": "intervals"})
-        )
-        df_hist[measure] = (
-            df_hist[measure]
-            .where(df_hist[measure] > 5, np.nan)
-            .apply(lambda x: 5 * round(x / 5) if ~np.isnan(x) else x)
-        )
-        df_in["bin"] = pd.cut(df_in[measure], bins=30).astype(str)
-        df_in2 = redact_round_table2(df_in.groupby("bin").bin.count())
-        df_in2.plot(kind="bar")
+        df_measure = df_in[measure]
+        nan_count = df_measure.isna().sum()
+        counts, bins = np.histogram(
+            df_measure[df_measure.notna()],
+            bins=n_bins)
+        formatted_bins = [
+            f"{b} - {bins[i+1]}" for i, b in enumerate(bins[:-1])
+        ]
+        df_hist = pd.DataFrame({"bins": formatted_bins, "counts": counts})
+        df_hist['counts'] = redact_round_table2(df_hist['counts'])
+        plt.hist(bins[:-1], bins, weights=counts)
         plt.title(title)
-        df_hist.to_csv(f"output/{output_path}/tables/hist_data_{path}.csv")
         plt.savefig(
-            f"output/{output_path}/figures/hist_{path}.png", bbox_inches="tight"
+            f"output/{output_path}/figures/hist_{path}.png",
+            bbox_inches="tight",
         )
         plt.close()
-    except:
-        pass
+        df_hist = pd.concat(
+            [df_hist,
+             pd.DataFrame({"bins": "NaN", "counts": nan_count}, index=[0])]).reset_index()
+        df_hist.to_csv(f"output/{output_path}/tables/hist_data_{path}.csv")
+    except Exception as e:
+        print(
+            f"Error plotting histogram for measure:{measure}, path:{path}. {e}",
+            file=stderr,
+        )
+        raise
 
 
 def decile_plot(df_in, measure, title, path):
@@ -119,13 +130,16 @@ def decile_plot(df_in, measure, title, path):
             .where(df_dec[measure] > 5, np.nan)
             .apply(lambda x: 5 * round(x / 5) if ~np.isnan(x) else x)
         )
-        df_in["bin"] = pd.qcut(df_in[measure], 10, duplicates="drop").astype(str)
+        df_in["bin"] = pd.qcut(df_in[measure], 10, duplicates="drop").astype(
+            str
+        )
         df_in2 = redact_round_table2(df_in.groupby("bin").bin.count())
         df_in2.plot(kind="bar")
         plt.title(title)
         df_dec.to_csv(f"output/{output_path}/tables/decile_plot_{path}.csv")
         plt.savefig(
-            f"output/{output_path}/figures/decile_plot_{path}.png", bbox_inches="tight"
+            f"output/{output_path}/figures/decile_plot_{path}.png",
+            bbox_inches="tight",
         )
         plt.close()
     except:
@@ -138,7 +152,9 @@ def q_n(x, pct):
 
 def subset_q(df_in, measure, pct, less=True):
     # Drop the top 5 highest in measure (outliers)
-    df_clean = df_in.loc[~df_in[measure].isin(df_in[measure].nlargest(n=5).tolist())]
+    df_clean = df_in.loc[
+        ~df_in[measure].isin(df_in[measure].nlargest(n=5).tolist())
+    ]
     if pct < 1:
         p = q_n(df_clean[measure], pct)
     else:
@@ -155,7 +171,9 @@ def kde_plot(df_in, measure, title, path):
         df_kde = pd.DataFrame(df_in[measure])
         df_kde.plot.kde()
         plt.title(title)
-        plt.savefig(f"output/{output_path}/figures/kde_{path}.png", bbox_inches="tight")
+        plt.savefig(
+            f"output/{output_path}/figures/kde_{path}.png", bbox_inches="tight"
+        )
     except:
         pass
 
