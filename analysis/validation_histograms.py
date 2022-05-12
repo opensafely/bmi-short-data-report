@@ -233,6 +233,20 @@ def main():
         (df_clean["weight_backend"] > 0) & (df_clean["weight_backend"] < 500)
     ]
     ### Create histograms
+    # All height
+    hist(
+        df_clean,
+        "height_backend",
+        "Distribution of Height (CTV3 Codes Used in OpenSAFELY-TPP Backend)",
+        "height_all",
+    )
+    # All weight
+    hist(
+        df_clean,
+        "weight_backend",
+        "Distribution of Weight (CTV3 Codes Used in OpenSAFELY-TPP Backend)",
+        "weight_all",
+    )
     # Reasonable height (considering cm/in measurements)
     hist(
         df_height_m,
@@ -254,6 +268,10 @@ def main():
         "weight_bound",
     )
     ### Create CDFs
+    # All height
+    cdf(df_clean, "height_backend", "height_all")
+    # All weight
+    cdf(df_clean, "weight_backend", "weight_all")
     # Reasonable height (considering cm/in measurements)
     cdf(df_height_m, "height_backend", "height_meter_range")
     cdf(df_height_cm, "height_backend", "height_cm_range")
