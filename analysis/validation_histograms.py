@@ -10,7 +10,7 @@ from lib_phenotype_validation import import_clean
 input_path = "output/data/input_processed.feather"
 
 # Definitions
-definitions = ["backend_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]
+definitions = ["backend_computed_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]
 
 # Code dictionary
 code_dict = {

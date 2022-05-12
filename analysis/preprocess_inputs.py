@@ -57,9 +57,9 @@ df_output.loc[~np.isfinite(df_output['computed_bmi']), 'computed_bmi'] = 0
 
 # Create backend BMI if height and weight both populated
 df_output.loc[(df_output['height_backend'] != 0) & (df_output['weight_backend'] != 0) & (~df_output['height_backend'].isna()) & (~df_output['weight_backend'].isna()),
-              'backend_bmi'] = df_output['weight_backend']/(df_output['height_backend']**2)
-df_output.loc[(~df_output['backend_bmi'].isna()), 'backend_bmi_date'] = df_output['weight_backend_date']
+              'backend_computed_bmi'] = df_output['weight_backend']/(df_output['height_backend']**2)
+df_output.loc[(~df_output['backend_computed_bmi'].isna()), 'backend_computed_bmi_date'] = df_output['weight_backend_date']
 # Adjust for division by 0 (return 0)
-df_output.loc[~np.isfinite(df_output['backend_bmi']), 'backend_bmi'] = 0
+df_output.loc[~np.isfinite(df_output['backend_computed_bmi']), 'backend_computed_bmi'] = 0
 
 df_output.to_feather('output/data/input_processed.feather')
