@@ -224,9 +224,9 @@ def main():
     df_height_m = df_clean.loc[
         (df_clean["height_backend"] > 0) & (df_clean["height_backend"] < 3)
     ]
-    # Height (10-300; cm)
+    # Height (10-250; cm)
     df_height_cm = df_clean.loc[
-        (df_clean["height_backend"] > 10) & (df_clean["height_backend"] < 300)
+        (df_clean["height_backend"] > 10) & (df_clean["height_backend"] < 250)
     ]
     # Weight (0-500; should cover most kg and lbs)
     df_weight_bound = df_clean.loc[
@@ -243,7 +243,7 @@ def main():
     hist(
         df_height_cm,
         "height_backend",
-        "Distribution of Height Between 0 and 3 (meters)",
+        "Distribution of Height Between 10 and 250 (cm)",
         "height_cm_range",
     )
     # Reasonable weight (considering stone/lbs)
