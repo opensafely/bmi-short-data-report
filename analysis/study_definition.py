@@ -13,7 +13,6 @@ study = StudyDefinition(
     },
     population=patients.satisfying(
         """
-        registered AND
         (sex = "M" OR sex = "F") AND
         (age >= 18 AND age <= 110)
         """,

@@ -10,7 +10,7 @@ from lib_phenotype_validation import import_clean
 input_path = "output/data/input_processed.feather"
 
 # Definitions
-definitions = ["backend_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]
+definitions = ["backend_computed_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]
 
 # Code dictionary
 code_dict = {
@@ -224,15 +224,29 @@ def main():
     df_height_m = df_clean.loc[
         (df_clean["height_backend"] > 0) & (df_clean["height_backend"] < 3)
     ]
-    # Height (10-300; cm)
+    # Height (10-250; cm)
     df_height_cm = df_clean.loc[
-        (df_clean["height_backend"] > 10) & (df_clean["height_backend"] < 300)
+        (df_clean["height_backend"] > 10) & (df_clean["height_backend"] < 250)
     ]
     # Weight (0-500; should cover most kg and lbs)
     df_weight_bound = df_clean.loc[
         (df_clean["weight_backend"] > 0) & (df_clean["weight_backend"] < 500)
     ]
     ### Create histograms
+    # All height
+    hist(
+        df_clean,
+        "height_backend",
+        "Distribution of Height (CTV3 Codes Used in OpenSAFELY-TPP Backend)",
+        "height_all",
+    )
+    # All weight
+    hist(
+        df_clean,
+        "weight_backend",
+        "Distribution of Weight (CTV3 Codes Used in OpenSAFELY-TPP Backend)",
+        "weight_all",
+    )
     # Reasonable height (considering cm/in measurements)
     hist(
         df_height_m,
@@ -243,7 +257,7 @@ def main():
     hist(
         df_height_cm,
         "height_backend",
-        "Distribution of Height Between 0 and 3 (meters)",
+        "Distribution of Height Between 10 and 250 (cm)",
         "height_cm_range",
     )
     # Reasonable weight (considering stone/lbs)
@@ -254,6 +268,10 @@ def main():
         "weight_bound",
     )
     ### Create CDFs
+    # All height
+    cdf(df_clean, "height_backend", "height_all")
+    # All weight
+    cdf(df_clean, "weight_backend", "weight_all")
     # Reasonable height (considering cm/in measurements)
     cdf(df_height_m, "height_backend", "height_meter_range")
     cdf(df_height_cm, "height_backend", "height_cm_range")

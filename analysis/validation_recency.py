@@ -19,7 +19,7 @@ from lib_phenotype_validation import *
 input_path = 'output/data/input_processed.feather'
 
 # Definitions
-definitions = ['backend_bmi', 'computed_bmi', 'derived_bmi', 'recorded_bmi']
+definitions = ['backend_computed_bmi', 'computed_bmi', 'derived_bmi', 'recorded_bmi']
 
 # Code dictionary
 code_dict = {
@@ -136,7 +136,7 @@ def diff_in_dates(df_clean, meas1, meas2, computed_measure):
     plt.close()
     
     df_lt_year = df_bmi_date_diff.loc[df_bmi_date_diff.gt_year == 0]
-    df_hist = pd.DataFrame(pd.cut(df_lt_year['backend_bmi'], 10).value_counts().sort_index()).reset_index().rename(columns={'index':'intervals'})
+    df_hist = pd.DataFrame(pd.cut(df_lt_year[computed_measure], 10).value_counts().sort_index()).reset_index().rename(columns={'index':'intervals'})
     df_hist[computed_measure] = df_hist[computed_measure].where(
         df_hist[computed_measure] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
     df_lt_year['bin']=pd.cut(df_lt_year[computed_measure], bins = 10).astype(str)
@@ -182,7 +182,7 @@ def main():
     # Distribution of measurement to now
     recent_to_now(df_clean, definitions)
     # Distribution of BMI for small vs. large height-weight time difference
-    diff_in_dates(df_clean, 'height_backend', 'weight_backend', 'backend_bmi')
+    diff_in_dates(df_clean, 'height_backend', 'weight_backend', 'backend_computed_bmi')
     
 # ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
