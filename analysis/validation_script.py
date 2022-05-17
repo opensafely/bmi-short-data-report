@@ -70,7 +70,9 @@ def main():
     # Count number of measurements 
     num_measurements(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
     # Report distributions
-
+    report_distribution(df_clean, definitions, output_path, group='')
+    for group in demographic_covariates + clinical_covariates:
+        report_distribution(df_clean, definitions, output_path, group)
     # Count values out of range
     
     # Report new records over time

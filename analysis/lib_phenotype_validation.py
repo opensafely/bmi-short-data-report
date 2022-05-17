@@ -18,6 +18,7 @@ def redact_round_table(df_in, nan_control=False):
     Arguments:
         df_in: a dataframe of integer counts 
         nan_control: If True, explicitly ignores nan. 
+        
     Returns:
         df_out: a dataframe with counts redacted and rounded
     """
@@ -54,7 +55,6 @@ def import_clean(input_path, definitions, other_vars, demographic_covariates,
         
     Returns: 
         df_out: a dataframe
-        
     """
     # Import
     df_import = pd.read_feather(input_path)
@@ -155,9 +155,9 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
         missing: boolean. If False, counts patients with measurement.
                  If missing == True, counts patients missing the
                  measurement.
+                 
     Returns:
         .csv file (tabular output of counts)
-    
     """
     suffix = '_filled'
     subgroup = 'with records'
@@ -258,7 +258,6 @@ def num_measurements(df_clean, definitions, demographic_covariates, clinical_cov
        
     Returns:
         .csv file (tabular output of counts)
-    
     """
     df_all = pd.DataFrame(df_clean[definitions].count()).T
     df_all['group'],df_all['subgroup'] = ['all','with records']
@@ -299,7 +298,6 @@ def display_heatmap(df_clean, definitions, output_path):
 
     Returns:
         .png file (heatmap image)
-    
     """
     # All with measurement
     li_filled = []
@@ -339,7 +337,6 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
     Returns:
         .csv file (underlying data)
         .png file (line plot)
-    
     """
     li_df = []
     for definition in definitions:
@@ -372,6 +369,7 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
 def hist(df_in, measure, title, output_path, filepath, n_bins=30):
     """
     Plots histogram
+    
     Arguments:
         df_in: input dataframe
         measure: measure being plotted
@@ -379,6 +377,7 @@ def hist(df_in, measure, title, output_path, filepath, n_bins=30):
         output_path: filepath to the output folder
         filepath: filepath to the output file
         n_bins: number of bins (default 30)
+        
     Returns:
         .csv file (underlying data with counts by bin)
         .png file (histogram)
@@ -408,16 +407,37 @@ def hist(df_in, measure, title, output_path, filepath, n_bins=30):
         raise
         
 def recent_to_now(df_clean, definitions):
+    """
+    Plots histogram of most recent measurements
+    
+    Arguments:
+        df_clean: a dataframe that has been cleaned using import_clean()
+        definitions: a list of derived variables to be evaluated
+    
+    Returns: 
+        .png file (histogram)
+    """
     curr_time = pd.to_datetime("now")
     for definition in definitions:
         df_temp = df_clean[['patient_id', definition+'_date']].sort_values(by=['patient_id', definition+'_date'], ascending=False)
         df_temp2 = df_temp.drop_duplicates(subset='patient_id')
+        # Compute difference between dates (in days)
         df_temp2[definition+'_date_diff'] = (curr_time-df_temp2[definition+'_date']).dt.days
-        hist(df_temp2, definition+'_date_diff', f'Days between now and most recent {definition}', f'most_recent_{definition}')
+        hist(df_temp2, 
+             definition+'_date_diff', 
+             f'Days between now and most recent {definition}', 
+             f'most_recent_{definition}')
         
 def q_n(x, pct):
     """
-    Returns the value at the given quantile
+    Returns the value corresponding to a given percentile
+    
+    Arguments:
+        x: a series
+        pct: percentile 
+        
+    Returns:
+        float value at the given percentile 
     """
     return x.quantile(pct)
 
@@ -425,6 +445,16 @@ def q_n(x, pct):
 def subset_q(df_in, measure, threshold, less=True):
     """
     Subsets the data based on numeric threshold
+    
+    Arguments:
+        df_in: input dataframe
+        measure: measure being evaluated
+        threshold: value used to subset the dataframe
+        less: If True, keeps measures below the threshold. 
+              If False, keeps measures above the threshold.
+        
+    Returns:
+        df_subset: a dataframe
     """
     if less == True:
         df_subset = df_in.loc[df_in[measure] < threshold]
@@ -436,23 +466,34 @@ def subset_q(df_in, measure, threshold, less=True):
 def count_table(df_in, measure, output_path, filepath):
     """
     Counts and outputs the number of non-NA rows
+    
+    Arguments:
+        df_in: input dataframe
+        measure: measure being evaluated
+        output_path: filepath to the output folder
+        filepath: filepath to the output file
+    
+    Returns:
+        .csv file (tabular output of counts)
     """
     ct_table = pd.DataFrame(df_in[[measure]].count(), columns=["counts"])
     ct_table.to_csv(f"output/{output_path}/tables/ct_{filepath}.csv")
-
+    
 
 def cdf(df_in, measure, output_path, filepath):
     """
     Computes and plots the cumulative distribution function (CDF)
+    
     Arguments:
         df_in: a dataframe
-        measure: 
-        output_path:
-        filepath: 
-    Returns:
+        measure: measure being plotted
+        output_path: filepath to the output folder
+        filepath: filepath to the output file
         
+    Returns:
+        .png file (CDF plot)
     """
-    # Frequency
+    # Compute frequency
     df_stats = df_in[[measure]]
     df_freq = (
         df_stats.groupby(measure)[measure]
@@ -460,9 +501,9 @@ def cdf(df_in, measure, output_path, filepath):
         .pipe(pd.DataFrame)
         .rename(columns={measure: "frequency"})
     )
-    # PDF
+    # Compute PDF
     df_freq["pdf"] = df_freq["frequency"] / sum(df_freq["frequency"])
-    # CDF
+    # Compute CDF
     df_freq["cdf"] = df_freq["pdf"].cumsum()
     df_freq = df_freq.reset_index()
     df_freq.plot(x=measure, y="cdf", grid=True)
@@ -482,7 +523,6 @@ def latest_common_comparison(df_clean, definitions, other_vars, output_path):
        
     Returns:
         two .csv files (tabular output of counts)
-    
     """
     for definition in definitions:
         vars = [s for s in other_vars if s.startswith(definition)]
@@ -543,104 +583,102 @@ def state_change(df_clean, definitions, other_vars, output_path):
     
         df_out.to_csv(f'output/{output_path}/tables/state_change_{definition}.csv')
         
+def report_distribution(df_clean, definitions, output_path, group=''):
+    """
+    Plots histogram (single definition) or boxplots (multiple definitions) showing
+    distribution of measurement
+    Arguments:
+        df_clean: dataframe cleaned using import_clean()
+        definitions: a list of derived variables to be evaluated
+        output_path: filepath to the output folder
+        group: categories across which to compare distributions; if blank, 
+               looks across the whole definition
+        
+    Returns:
+        .csv (underlying data)
+        .png (histogram if single definition, boxplot if multiple)
+    """
+    if group == '':
+        if len(definitions) == 1:
+            definition = definitions[0]
+            avg_value = pd.DataFrame(
+                df_clean[definition].agg(
+                    ['mean','count']
+                )
+            )
+            if avg_value.loc['count'][0] > 6:
+                avg_value.loc['count'][0] = 5 * round(avg_value.loc['count'][0]/5)
+                print(f'Average {definition}:\n')
+                avg_value.to_csv(f'output/{output_path}/tables/avg_value.csv')
+                fig, ax = plt.subplots(figsize=(12, 8))
+                hist_data = df_clean[definition].loc[~df_clean[definition].isna()]
+                hist(hist_data, 
+                     definition, 
+                     f'Distribution of {definition}', 
+                     output_path, 
+                     'distribution')
+            else:
+                print(f"Error plotting histogram for measure:{measure}, path:'distribution'")
+
+        else:
+            df_bp = df_clean[definitions]
+            avg = pd.DataFrame(df_bp.mean(),columns=['mean'])
+            ct = pd.DataFrame(df_bp.count(),columns=['count'])
+            avg_value = avg.merge(ct, left_index=True, right_index=True)
+            # Redact and round values
+            avg_value['count'] = avg_value['count'].where(
+                avg_value['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
+            print('Averages:\n')
+            avg_value.to_csv(f'output/{output_path}/tables/avg_value.csv')
+            fig, ax = plt.subplots(figsize=(12, 8))
+            sns.boxplot(data=df_bp,showfliers = False)
+            plt.title("Distributions of values")
+            plt.savefig(f'output/{output_path}/figures/distribution.png')
+    else:
+        if len(definitions) == 1:
+            definition = definitions[0]
+            df_bp = df_clean[[group]+ [definition]]
+            avg_value = df_bp.groupby(group)[definition].agg(
+                ['mean', 'count']
+            )
+            # Redact and round values
+            avg_value['count'] = avg_value['count'].where(
+                avg_value['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
+            avg_value.loc[avg_value['count'].isna(), ['count','mean']] = ['-','-']
+            print(f'Averages by {group}:\n')
+            avg_value.to_csv(f'output/{output_path}/tables/avg_value_{group}.csv')
+            null_index = avg_value[avg_value['count'] == '-'].index.tolist()
+            fig, ax = plt.subplots(figsize=(12, 8))
+            sns.boxplot(x=group, y=definition, data=df_bp.loc[~df_bp[group].isin(null_index)], showfliers=False)
+            plt.title(f"Distributions by {group}")
+            plt.savefig(f'output/{output_path}/figures/distribution_{group}.png')
+        else:
+            if df_clean[group].dtype == 'bool':
+                df_clean[group] = df_clean[group].apply(lambda x: str(x))
+            df_clean = df_clean.loc[~df_clean[group].isna()] # Drop nan categories
+            df_bp = df_clean[[group] + definitions]
+            avg = df_bp.groupby(group).mean().add_prefix("avg_")
+            ct = df_bp.groupby(group).count().add_prefix("ct_")
+            avg_value = avg.merge(ct, left_on=group, right_on=group)
+            for definition in definitions:
+                # Redact and round values
+                avg_value['ct_'+definition] = avg_value['ct_'+definition].where(
+                    avg_value['ct_'+definition] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
+                avg_value.loc[avg_value['ct_'+definition].isna(), 
+                                    ['ct_'+definition,'avg_'+definition]] = ['-','-']
+            print(f'Averages by {group}:\n')
+            avg_value.to_csv(f'output/{output_path}/tables/avg_value_{group}.csv')
+            for definition in definitions:
+                null_index = []
+                null_index = avg_value[avg_value['ct_'+definition] == '-'].index.tolist()
+                df_bp.loc[df_bp[group].isin(null_index),definition] = np.nan
+            fig, ax = plt.subplots(figsize=(12, 8))
+            df_plot = df_bp.melt(id_vars=group, value_vars=definitions)
+            sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
+            plt.title(f'Distributions by {group}')
+            plt.savefig(f'output/{output_path}/figures/distribution_{group}.png')
         
 ######################### OUTDATED FUNCTIONS THAT MAY BE REVIVED #########################
-
-# def report_distribution(df_clean, definitions, num_definitions, output_path, group=''):
-#     """
-#     Plots histogram (single definition) or boxplots (multiple definitions) showing
-#     distribution of measurement
-#     Arguments:
-    
-#     Returns:
-    
-#     """
-#     if group == '':
-#         if num_definitions == 1:
-#             for definition in definitions: 
-
-#                 avg_value = pd.DataFrame(
-#                     df_clean[definition].agg(
-#                         ['mean','count']
-#                     )
-#                 )
-#                 if avg_value.loc['count'][0] > 6:
-#                     avg_value.loc['count'][0] = 5 * round(avg_value.loc['count'][0]/5)
-#                     print(f'Average {definition}:\n')
-#                     #display(avg_value)
-#                     avg_value.to_csv(f'output/{output_path}/tables/avg_value_{definition}.csv')
-#                     fig, ax = plt.subplots(figsize=(12, 8))
-#                     hist_data = df_clean[definition].loc[~df_clean[definition].isna()]
-#                     plt.hist(hist_data, bins=np.arange(min(hist_data), max(hist_data)))
-#                     plt.title('Distribution of ' + definition)
-#                     #plt.show()
-#                     plt.savefig(f'output/{output_path}/figures/distribution.png')
-#                 else:
-#                     print('Table and plot redacted due to low counts.')
-                    
-#         else:
-#             df_bp = df_clean[definitions]
-#             avg = pd.DataFrame(df_bp.mean(),columns=['mean'])
-#             ct = pd.DataFrame(df_bp.count(),columns=['count'])
-#             avg_value = avg.merge(ct, left_index=True, right_index=True)
-#             # Redact and round values
-#             avg_value['count'] = avg_value['count'].where(
-#                 avg_value['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
-#             print('Averages:\n')
-#             #display(avg_value)
-#             avg_value.to_csv(f'output/{output_path}/tables/avg_value.csv')
-#             fig, ax = plt.subplots(figsize=(12, 8))
-#             sns.boxplot(data=df_bp,showfliers = False)
-#             plt.title("Distributions of values")
-#             #plt.show()
-#             plt.savefig(f'output/{output_path}/figures/distribution.png')
-#     else:
-#         if num_definitions == 1:
-#             for definition in definitions: 
-#                 df_bp = df_clean[[group]+ [definition]]
-#                 avg_value = df_bp.groupby(group)[definition].agg(
-#                     ['mean', 'count']
-#                 )
-#                 # Redact and round values
-#                 avg_value['count'] = avg_value['count'].where(
-#                     avg_value['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
-#                 avg_value.loc[avg_value['count'].isna(), ['count','mean']] = ['-','-']
-#                 print(f'Averages by {group}:\n')
-#                 #display(avg_value)    
-#                 avg_value.to_csv(f'output/{output_path}/tables/avg_value_{definition}_{group}.csv')
-#                 null_index = avg_value[avg_value['count'] == '-'].index.tolist()
-#                 fig, ax = plt.subplots(figsize=(12, 8))
-#                 sns.boxplot(x=group, y=definition, data=df_bp.loc[~df_bp[group].isin(null_index)], showfliers=False)
-#                 plt.title(f"Distributions by {group}")
-#                 #plt.show()
-#                 plt.savefig(f'output/{output_path}/figures/distribution_{group}.png')
-#         else:
-#             if df_clean[group].dtype == 'bool':
-#                 df_clean[group] = df_clean[group].apply(lambda x: str(x))
-#             df_clean = df_clean.loc[~df_clean[group].isna()] # Drop nan categories
-#             df_bp = df_clean[[group] + definitions]
-#             avg = df_bp.groupby(group).mean().add_prefix("avg_")
-#             ct = df_bp.groupby(group).count().add_prefix("ct_")
-#             avg_value = avg.merge(ct, left_on=group, right_on=group)
-#             for definition in definitions:
-#                 # Redact and round values
-#                 avg_value['ct_'+definition] = avg_value['ct_'+definition].where(
-#                     avg_value['ct_'+definition] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
-#                 avg_value.loc[avg_value['ct_'+definition].isna(), 
-#                                     ['ct_'+definition,'avg_'+definition]] = ['-','-']
-#             print(f'Averages by {group}:\n')
-#             #display(avg_value)
-#             avg_value.to_csv(f'output/{output_path}/tables/avg_value_{group}.csv')
-#             for definition in definitions:
-#                 null_index = []
-#                 null_index = avg_value[avg_value['ct_'+definition] == '-'].index.tolist()
-#                 df_bp.loc[df_bp[group].isin(null_index),definition] = np.nan
-#             fig, ax = plt.subplots(figsize=(12, 8))
-#             df_plot = df_bp.melt(id_vars=group, value_vars=definitions)
-#             sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
-#             plt.title(f'Distributions by {group}')
-#             #plt.show()
-#             plt.savefig(f'output/{output_path}/figures/distribution_{group}.png')
             
 # def report_out_of_range(df_occ, definitions, min_range, max_range, num_definitions, null, output_path, group=''):
 #     """
