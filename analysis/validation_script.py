@@ -10,12 +10,32 @@ definitions = ['backend_computed_bmi', 'computed_bmi', 'derived_bmi', 'recorded_
 
 # Code dictionary
 code_dict = {
-    'ethnicity': {1:'White', 2:'Mixed', 3:'Asian', 4:'Black', 5:'Other', np.nan: 'Unknown', 0: 'Unknown'},
-    'imd': {0: 'Unknown', 1: '1 Most deprived', 2: '2', 3: '3', 4: '4', 5: '5 Least deprived'}
+    "ethnicity": {
+        1: "White",
+        2: "Mixed",
+        3: "Asian",
+        4: "Black",
+        5: "Other",
+        np.nan: "Unknown",
+        0: "Unknown",
+    },
+    "imd": {
+        0: "Unknown",
+        1: "1 Most deprived",
+        2: "2",
+        3: "3",
+        4: "4",
+        5: "5 Least deprived",
+    },
 }
 
 # Other variables to include
-other_vars = ['height','weight']
+other_vars = [
+    "height_backend",
+    "weight_backend",
+    "height_backend_date",
+    "weight_backend_date",
+]
 
 # Dates
 dates = True
@@ -47,22 +67,23 @@ def main():
     patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
     # Count patients without records
     patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, output_path, missing=True)
-    # Generate heatmap of overlapping definitions
-    display_heatmap(df_clean, definitions, output_path)
+    # Count number of measurements 
+    num_measurements(df_clean, definitions, demographic_covariates, clinical_covariates)
     # Report distributions
     report_distribution(df_clean, definitions, len(definitions), output_path, group='')
     for group in demographic_covariates + clinical_covariates:
         report_distribution(df_clean, definitions, len(definitions), output_path, group)
-    # Report out-of-range values
-    report_out_of_range(df_clean, definitions, min_range, max_range, len(definitions), null, output_path, group='')
-    for group in demographic_covariates + clinical_covariates:
-        report_out_of_range(df_clean, definitions, min_range, max_range, len(definitions), null, output_path, group)
+    # Count values out of range
+    
     # Report new records over time
     records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
-    # Report update frequency
-    report_update_frequency(df_clean, definitions, time_delta, len(definitions), output_path, group='')
-    for group in demographic_covariates + clinical_covariates:
-        report_update_frequency(df_clean, definitions, time_delta, len(definitions), output_path, group)
+    # Report time between measurement and now 
+    
+    # Report means over time
+    
+    # Report means over time of out of range values 
+    
+    # Report distribution of height and weight for high BMI
         
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
