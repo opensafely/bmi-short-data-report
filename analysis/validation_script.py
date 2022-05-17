@@ -78,7 +78,7 @@ def main():
     # Report new records over time
     records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
     # Report time between measurement and now 
-    
+    recent_to_now(df_clean, definitions, output_path)
     # Report means over time
     
     # Report means over time of out of range values 

@@ -406,16 +406,17 @@ def hist(df_in, measure, title, output_path, filepath, n_bins=30):
         )
         raise
         
-def recent_to_now(df_clean, definitions):
+def recent_to_now(df_clean, definitions, output_path):
     """
-    Plots histogram of most recent measurements
+    Plots CDF of most recent measurements
     
     Arguments:
         df_clean: a dataframe that has been cleaned using import_clean()
         definitions: a list of derived variables to be evaluated
-    
+        output_path: filepath to output folder
+        
     Returns: 
-        .png file (histogram)
+        .png file (CDF)
     """
     curr_time = pd.to_datetime("now")
     for definition in definitions:
@@ -423,10 +424,10 @@ def recent_to_now(df_clean, definitions):
         df_temp2 = df_temp.drop_duplicates(subset='patient_id')
         # Compute difference between dates (in days)
         df_temp2[definition+'_date_diff'] = (curr_time-df_temp2[definition+'_date']).dt.days
-        hist(df_temp2, 
-             definition+'_date_diff', 
-             f'Days between now and most recent {definition}', 
-             f'most_recent_{definition}')
+        cdf(df_temp2, 
+            definition+'_date_diff', 
+            output_path, 
+            f'most_recent_{definition}')
         
 def q_n(x, pct):
     """
