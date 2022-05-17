@@ -32,6 +32,132 @@ def redact_round_table(df_in, nan_control=False):
         )
     return df_out
 
+
+def q_n(x, pct):
+    """
+    Returns the value corresponding to a given percentile
+    
+    Arguments:
+        x: a series
+        pct: percentile 
+        
+    Returns:
+        float value at the given percentile 
+    """
+    return x.quantile(pct)
+
+
+def subset_q(df_in, measure, threshold, less=True):
+    """
+    Subsets the data based on numeric threshold
+    
+    Arguments:
+        df_in: input dataframe
+        measure: measure being evaluated
+        threshold: value used to subset the dataframe
+        less: If True, keeps measures below the threshold. 
+              If False, keeps measures above the threshold.
+        
+    Returns:
+        df_subset: a dataframe
+    """
+    if less == True:
+        df_subset = df_in.loc[df_in[measure] < threshold]
+    else:
+        df_subset = df_in.loc[df_in[measure] > threshold]
+    return df_subset
+
+
+def count_table(df_in, measure, output_path, filepath):
+    """
+    Counts and outputs the number of non-NA rows
+    
+    Arguments:
+        df_in: input dataframe
+        measure: measure being evaluated
+        output_path: filepath to the output folder
+        filepath: filepath to the output file
+    
+    Returns:
+        .csv file (tabular output of counts)
+    """
+    ct_table = pd.DataFrame(df_in[[measure]].count(), columns=["counts"])
+    ct_table.to_csv(f"output/{output_path}/tables/ct_{filepath}.csv")
+    
+
+def cdf(df_in, measure, output_path, filepath):
+    """
+    Computes and plots the cumulative distribution function (CDF)
+    
+    Arguments:
+        df_in: a dataframe
+        measure: measure being plotted
+        output_path: filepath to the output folder
+        filepath: filepath to the output file
+        
+    Returns:
+        .png file (CDF plot)
+    """
+    # Compute frequency
+    df_stats = df_in[[measure]]
+    df_freq = (
+        df_stats.groupby(measure)[measure]
+        .agg("count")
+        .pipe(pd.DataFrame)
+        .rename(columns={measure: "frequency"})
+    )
+    # Compute PDF
+    df_freq["pdf"] = df_freq["frequency"] / sum(df_freq["frequency"])
+    # Compute CDF
+    df_freq["cdf"] = df_freq["pdf"].cumsum()
+    df_freq = df_freq.reset_index()
+    df_freq.plot(x=measure, y="cdf", grid=True)
+    plt.title(f"CDF of {measure}")
+    plt.savefig(f"output/{output_path}/figures/cdf_{filepath}.png", bbox_inches="tight")
+    plt.close()
+    
+    
+def hist(df_in, measure, title, output_path, filepath, n_bins=30):
+    """
+    Plots histogram
+    
+    Arguments:
+        df_in: input dataframe
+        measure: measure being plotted
+        title: title of histogram
+        output_path: filepath to the output folder
+        filepath: filepath to the output file
+        n_bins: number of bins (default 30)
+        
+    Returns:
+        .csv file (underlying data with counts by bin)
+        .png file (histogram)
+    """
+    try:
+        df_measure = df_in[measure]
+        nan_count = df_measure.isna().sum()
+        counts, bins = np.histogram(df_measure[df_measure.notna()], bins=n_bins)
+        formatted_bins = [f"{b} - {bins[i+1]}" for i, b in enumerate(bins[:-1])]
+        df_hist = pd.DataFrame({"bins": formatted_bins, "counts": counts})
+        df_hist["counts"] = redact_round_table(df_hist["counts"], nan_control=True)
+        plt.hist(bins[:-1], bins, weights=counts)
+        plt.title(title)
+        plt.savefig(
+            f"output/{output_path}/figures/hist_{filepath}.png", bbox_inches="tight",
+        )
+        plt.close()
+        df_hist = pd.concat(
+            [df_hist, pd.DataFrame({"bins": "NaN", "counts": nan_count}, index=[0])]
+        ).reset_index()
+        df_hist.to_csv(f"output/{output_path}/tables/hist_data_{filepath}.csv")
+    except Exception as e:
+        print(
+            f"Error plotting histogram for measure:{measure}, path:{filepath}. {e}",
+            file=stderr,
+        )
+        raise
+
+        
 def import_clean(input_path, definitions, other_vars, demographic_covariates, 
                  clinical_covariates, null, date_min, date_max, 
                  time_delta, output_path, code_dict='', dates=False):
@@ -137,6 +263,7 @@ def import_clean(input_path, definitions, other_vars, demographic_covariates,
             os.makedirs(filepath)
 
     return df_clean
+
 
 def patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates,
                    output_path, categories=False, missing=False):
@@ -245,6 +372,7 @@ def patient_counts(df_clean, definitions, demographic_covariates, clinical_covar
     if categories == True:
         df_all_redact.to_csv(f'output/{output_path}/tables/patient_counts_by_categories{suffix}.csv')
 
+        
 def num_measurements(df_clean, definitions, demographic_covariates, clinical_covariates, output_path):
     """
     Count the number of measurements
@@ -286,6 +414,7 @@ def num_measurements(df_clean, definitions, demographic_covariates, clinical_cov
     df_append = df_append.where(~df_append.isna(), '-')  
 
     df_append.to_csv(f'output/{output_path}/tables/num_measurements.csv')
+       
         
 def display_heatmap(df_clean, definitions, output_path):
     """
@@ -323,267 +452,7 @@ def display_heatmap(df_clean, definitions, output_path):
     
     plt.savefig(f'output/{output_path}/figures/heatmap.png')
     
-def records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path):
-    """
-    Count the number of records over time
     
-    Arguments:
-        df_clean: a dataframe that has been cleaned using import_clean()
-        definitions: a list of derived variables to be evaluated
-        demographic_covariates: a list of demographic covariates 
-        clinical_covariates: a list of clinical covariates
-        output_path: filepath to the output folder
-       
-    Returns:
-        .csv file (underlying data)
-        .png file (line plot)
-    """
-    li_df = []
-    for definition in definitions:
-        df_grouped = df_clean[[definition+'_date',definition]].groupby(
-            definition+'_date'
-        ).count().reset_index().rename(columns={definition+'_date':'date'}).set_index('date')
-        li_df.append(redact_round_table(df_grouped))
-    df_all_time = pd.concat(li_df).stack().reset_index().rename(columns={'level_1':'variable',0:'value'})
-    del li_df 
-    
-    fig, ax = plt.subplots(figsize=(12, 8))
-    fig.autofmt_xdate()
-    sns.lineplot(x = 'date', y = 'value', hue='variable', data = df_all_time, ax=ax).set_title('New records by month')
-    ax.legend().set_title('')
-    df_all_time.to_csv(f'output/{output_path}/tables/record_over_time.csv')
-    plt.savefig(f'output/{output_path}/figures/records_over_time.png')
-
-    for group in demographic_covariates + clinical_covariates:
-        for definition in definitions:
-            df_grouped = df_clean[[definition+'_date',definition,group]].groupby(
-                                  [definition+'_date',group]).count().reset_index().rename(columns={definition+'_date':'date'}).set_index(['date', group])
-            df_time=redact_round_table(df_grouped).reset_index()
-            fig, ax = plt.subplots(figsize=(12, 8))
-            fig.autofmt_xdate()
-            sns.lineplot(x = 'date', y = definition, hue=group, data = df_time, ax=ax).set_title(f'{definition} recorded by {group} and month')
-            ax.legend().set_title('')
-            df_time.to_csv(f'output/{output_path}/tables/record_over_time_{definition}_{group}.csv')
-            plt.savefig(f'output/{output_path}/figures/records_over_time_{definition}_{group}.png')
-            
-def hist(df_in, measure, title, output_path, filepath, n_bins=30):
-    """
-    Plots histogram
-    
-    Arguments:
-        df_in: input dataframe
-        measure: measure being plotted
-        title: title of histogram
-        output_path: filepath to the output folder
-        filepath: filepath to the output file
-        n_bins: number of bins (default 30)
-        
-    Returns:
-        .csv file (underlying data with counts by bin)
-        .png file (histogram)
-    """
-    try:
-        df_measure = df_in[measure]
-        nan_count = df_measure.isna().sum()
-        counts, bins = np.histogram(df_measure[df_measure.notna()], bins=n_bins)
-        formatted_bins = [f"{b} - {bins[i+1]}" for i, b in enumerate(bins[:-1])]
-        df_hist = pd.DataFrame({"bins": formatted_bins, "counts": counts})
-        df_hist["counts"] = redact_round_table(df_hist["counts"], nan_control=True)
-        plt.hist(bins[:-1], bins, weights=counts)
-        plt.title(title)
-        plt.savefig(
-            f"output/{output_path}/figures/hist_{filepath}.png", bbox_inches="tight",
-        )
-        plt.close()
-        df_hist = pd.concat(
-            [df_hist, pd.DataFrame({"bins": "NaN", "counts": nan_count}, index=[0])]
-        ).reset_index()
-        df_hist.to_csv(f"output/{output_path}/tables/hist_data_{filepath}.csv")
-    except Exception as e:
-        print(
-            f"Error plotting histogram for measure:{measure}, path:{filepath}. {e}",
-            file=stderr,
-        )
-        raise
-        
-def recent_to_now(df_clean, definitions, output_path):
-    """
-    Plots CDF of most recent measurements
-    
-    Arguments:
-        df_clean: a dataframe that has been cleaned using import_clean()
-        definitions: a list of derived variables to be evaluated
-        output_path: filepath to output folder
-        
-    Returns: 
-        .png file (CDF)
-    """
-    curr_time = pd.to_datetime("now")
-    for definition in definitions:
-        df_temp = df_clean[['patient_id', definition+'_date']].sort_values(by=['patient_id', definition+'_date'], ascending=False)
-        df_temp2 = df_temp.drop_duplicates(subset='patient_id')
-        # Compute difference between dates (in days)
-        df_temp2[definition+'_date_diff'] = (curr_time-df_temp2[definition+'_date']).dt.days
-        cdf(df_temp2, 
-            definition+'_date_diff', 
-            output_path, 
-            f'most_recent_{definition}')
-        
-def q_n(x, pct):
-    """
-    Returns the value corresponding to a given percentile
-    
-    Arguments:
-        x: a series
-        pct: percentile 
-        
-    Returns:
-        float value at the given percentile 
-    """
-    return x.quantile(pct)
-
-
-def subset_q(df_in, measure, threshold, less=True):
-    """
-    Subsets the data based on numeric threshold
-    
-    Arguments:
-        df_in: input dataframe
-        measure: measure being evaluated
-        threshold: value used to subset the dataframe
-        less: If True, keeps measures below the threshold. 
-              If False, keeps measures above the threshold.
-        
-    Returns:
-        df_subset: a dataframe
-    """
-    if less == True:
-        df_subset = df_in.loc[df_in[measure] < threshold]
-    else:
-        df_subset = df_in.loc[df_in[measure] > threshold]
-    return df_subset
-
-
-def count_table(df_in, measure, output_path, filepath):
-    """
-    Counts and outputs the number of non-NA rows
-    
-    Arguments:
-        df_in: input dataframe
-        measure: measure being evaluated
-        output_path: filepath to the output folder
-        filepath: filepath to the output file
-    
-    Returns:
-        .csv file (tabular output of counts)
-    """
-    ct_table = pd.DataFrame(df_in[[measure]].count(), columns=["counts"])
-    ct_table.to_csv(f"output/{output_path}/tables/ct_{filepath}.csv")
-    
-
-def cdf(df_in, measure, output_path, filepath):
-    """
-    Computes and plots the cumulative distribution function (CDF)
-    
-    Arguments:
-        df_in: a dataframe
-        measure: measure being plotted
-        output_path: filepath to the output folder
-        filepath: filepath to the output file
-        
-    Returns:
-        .png file (CDF plot)
-    """
-    # Compute frequency
-    df_stats = df_in[[measure]]
-    df_freq = (
-        df_stats.groupby(measure)[measure]
-        .agg("count")
-        .pipe(pd.DataFrame)
-        .rename(columns={measure: "frequency"})
-    )
-    # Compute PDF
-    df_freq["pdf"] = df_freq["frequency"] / sum(df_freq["frequency"])
-    # Compute CDF
-    df_freq["cdf"] = df_freq["pdf"].cumsum()
-    df_freq = df_freq.reset_index()
-    df_freq.plot(x=measure, y="cdf", grid=True)
-    plt.title(f"CDF of {measure}")
-    plt.savefig(f"output/{output_path}/figures/cdf_{filepath}.png", bbox_inches="tight")
-    plt.close()
-
-def latest_common_comparison(df_clean, definitions, other_vars, output_path):
-    """
-    Compares the latest record with the most commonly occurring record over time
-    
-    Arguments:
-        df_clean: a dataframe that has been cleaned using import_clean()
-        definitions: a list of derived variables to be evaluated
-        other_vars: a list of other variables to be included in the dataframe
-        output_path: filepath to the output folder
-       
-    Returns:
-        two .csv files (tabular output of counts)
-    """
-    for definition in definitions:
-        vars = [s for s in other_vars if s.startswith(definition)]
-        df_subset = df_clean.loc[~df_clean[definition].isna()]
-        df_subset = df_subset[[definition]+vars].set_index(definition)
-
-        df_subset2 = df_subset.where(df_subset.eq(df_subset.max(1),axis=0))
-        df_subset_3 = df_subset2.notnull().astype('int').reset_index()
-        df_sum = redact_round_table(df_subset_3.groupby(definition).sum())
-
-        df_counts = pd.DataFrame(np.diagonal(df_sum),index=df_sum.index,columns=[f'matching (n={np.diagonal(df_sum).sum()})'])
-
-        df_sum2 = df_sum.copy(deep=True)
-        np.fill_diagonal(df_sum2.values, 0)
-        df_diag = pd.DataFrame(df_sum2.sum(axis=1), columns=[f'not_matching (n={df_sum2.sum(axis=1).sum()})'])
-        df_out = df_counts.merge(df_diag,right_index=True,left_index=True)
-        df_out.to_csv(f'output/{output_path}/tables/latest_common_simple_{definition}.csv')
-
-        df_sum = redact_round_table(df_subset_3.groupby(definition).sum())     
-
-        for col in df_sum.columns:
-            df_sum = df_sum.rename(columns = {col:f'{col} (n={df_sum[col].sum()})'})
-        df_sum = df_sum.where(~df_sum.isna(), '-')
-        df_sum.to_csv(f'output/{output_path}/tables/latest_common_expanded_{definition}.csv')
-            
-def state_change(df_clean, definitions, other_vars, output_path):
-    """
-    Counts instances of state changes 
-    
-    Arguments:
-        df_clean: a dataframe that has been cleaned using import_clean()
-        definitions: a list of derived variables to be evaluated
-        other_vars: a list of other variables to be included in the dataframe
-        output_path: filepath to the output folder
-       
-    Returns:
-        .csv files (tabular output of counts)
-    
-    """
-    for definition in definitions:
-        vars = [s for s in other_vars if s.startswith(definition)]
-        df_subset = df_clean[
-            [definition]+vars
-        ].replace(0,np.nan).set_index(definition).reset_index()
-        df_subset['n'] = 1
-        
-        # Count
-        df_subset2 = df_subset.loc[~df_subset[definition].isna()]
-        df_subset3 = redact_round_table(df_subset2.groupby(definition).count()).reset_index()
-        
-        # Set index
-        df_subset3['index'] = df_subset3[definition].astype(str) + " (n = " + df_subset3['n'].astype(int).astype(str) + ")"
-        df_out = df_subset3.drop(columns=[definition,'n']).rename(columns = {'index':definition}).set_index(definition)
-        
-        # Null out the diagonal
-        np.fill_diagonal(df_out.values, np.nan)
-        df_out = df_out.where(~df_out.isna(), '-')
-    
-        df_out.to_csv(f'output/{output_path}/tables/state_change_{definition}.csv')
-        
 def report_distribution(df_clean, definitions, output_path, group=''):
     """
     Plots histogram (single definition) or boxplots (multiple definitions) showing
@@ -678,6 +547,149 @@ def report_distribution(df_clean, definitions, output_path, group=''):
             sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
             plt.title(f'Distributions by {group}')
             plt.savefig(f'output/{output_path}/figures/distribution_{group}.png')
+    
+    
+def records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path):
+    """
+    Count the number of records over time
+    
+    Arguments:
+        df_clean: a dataframe that has been cleaned using import_clean()
+        definitions: a list of derived variables to be evaluated
+        demographic_covariates: a list of demographic covariates 
+        clinical_covariates: a list of clinical covariates
+        output_path: filepath to the output folder
+       
+    Returns:
+        .csv file (underlying data)
+        .png file (line plot)
+    """
+    li_df = []
+    for definition in definitions:
+        df_grouped = df_clean[[definition+'_date',definition]].groupby(
+            definition+'_date'
+        ).count().reset_index().rename(columns={definition+'_date':'date'}).set_index('date')
+        li_df.append(redact_round_table(df_grouped))
+    df_all_time = pd.concat(li_df).stack().reset_index().rename(columns={'level_1':'variable',0:'value'})
+    del li_df 
+    
+    fig, ax = plt.subplots(figsize=(12, 8))
+    fig.autofmt_xdate()
+    sns.lineplot(x = 'date', y = 'value', hue='variable', data = df_all_time, ax=ax).set_title('New records by month')
+    ax.legend().set_title('')
+    df_all_time.to_csv(f'output/{output_path}/tables/record_over_time.csv')
+    plt.savefig(f'output/{output_path}/figures/records_over_time.png')
+
+    for group in demographic_covariates + clinical_covariates:
+        for definition in definitions:
+            df_grouped = df_clean[[definition+'_date',definition,group]].groupby(
+                                  [definition+'_date',group]).count().reset_index().rename(columns={definition+'_date':'date'}).set_index(['date', group])
+            df_time=redact_round_table(df_grouped).reset_index()
+            fig, ax = plt.subplots(figsize=(12, 8))
+            fig.autofmt_xdate()
+            sns.lineplot(x = 'date', y = definition, hue=group, data = df_time, ax=ax).set_title(f'{definition} recorded by {group} and month')
+            ax.legend().set_title('')
+            df_time.to_csv(f'output/{output_path}/tables/record_over_time_{definition}_{group}.csv')
+            plt.savefig(f'output/{output_path}/figures/records_over_time_{definition}_{group}.png')
+            
+            
+def recent_to_now(df_clean, definitions, output_path):
+    """
+    Plots CDF of most recent measurements
+    
+    Arguments:
+        df_clean: a dataframe that has been cleaned using import_clean()
+        definitions: a list of derived variables to be evaluated
+        output_path: filepath to output folder
+        
+    Returns: 
+        .png file (CDF)
+    """
+    curr_time = pd.to_datetime("now")
+    for definition in definitions:
+        df_temp = df_clean[['patient_id', definition+'_date']].sort_values(by=['patient_id', definition+'_date'], ascending=False)
+        df_temp2 = df_temp.drop_duplicates(subset='patient_id')
+        # Compute difference between dates (in days)
+        df_temp2[definition+'_date_diff'] = (curr_time-df_temp2[definition+'_date']).dt.days
+        cdf(df_temp2, 
+            definition+'_date_diff', 
+            output_path, 
+            f'most_recent_{definition}')
+        
+        
+def latest_common_comparison(df_clean, definitions, other_vars, output_path):
+    """
+    Compares the latest record with the most commonly occurring record over time
+    
+    Arguments:
+        df_clean: a dataframe that has been cleaned using import_clean()
+        definitions: a list of derived variables to be evaluated
+        other_vars: a list of other variables to be included in the dataframe
+        output_path: filepath to the output folder
+       
+    Returns:
+        two .csv files (tabular output of counts)
+    """
+    for definition in definitions:
+        vars = [s for s in other_vars if s.startswith(definition)]
+        df_subset = df_clean.loc[~df_clean[definition].isna()]
+        df_subset = df_subset[[definition]+vars].set_index(definition)
+
+        df_subset2 = df_subset.where(df_subset.eq(df_subset.max(1),axis=0))
+        df_subset_3 = df_subset2.notnull().astype('int').reset_index()
+        df_sum = redact_round_table(df_subset_3.groupby(definition).sum())
+
+        df_counts = pd.DataFrame(np.diagonal(df_sum),index=df_sum.index,columns=[f'matching (n={np.diagonal(df_sum).sum()})'])
+
+        df_sum2 = df_sum.copy(deep=True)
+        np.fill_diagonal(df_sum2.values, 0)
+        df_diag = pd.DataFrame(df_sum2.sum(axis=1), columns=[f'not_matching (n={df_sum2.sum(axis=1).sum()})'])
+        df_out = df_counts.merge(df_diag,right_index=True,left_index=True)
+        df_out.to_csv(f'output/{output_path}/tables/latest_common_simple_{definition}.csv')
+
+        df_sum = redact_round_table(df_subset_3.groupby(definition).sum())     
+
+        for col in df_sum.columns:
+            df_sum = df_sum.rename(columns = {col:f'{col} (n={df_sum[col].sum()})'})
+        df_sum = df_sum.where(~df_sum.isna(), '-')
+        df_sum.to_csv(f'output/{output_path}/tables/latest_common_expanded_{definition}.csv')
+            
+            
+def state_change(df_clean, definitions, other_vars, output_path):
+    """
+    Counts instances of state changes 
+    
+    Arguments:
+        df_clean: a dataframe that has been cleaned using import_clean()
+        definitions: a list of derived variables to be evaluated
+        other_vars: a list of other variables to be included in the dataframe
+        output_path: filepath to the output folder
+       
+    Returns:
+        .csv files (tabular output of counts)
+    
+    """
+    for definition in definitions:
+        vars = [s for s in other_vars if s.startswith(definition)]
+        df_subset = df_clean[
+            [definition]+vars
+        ].replace(0,np.nan).set_index(definition).reset_index()
+        df_subset['n'] = 1
+        
+        # Count
+        df_subset2 = df_subset.loc[~df_subset[definition].isna()]
+        df_subset3 = redact_round_table(df_subset2.groupby(definition).count()).reset_index()
+        
+        # Set index
+        df_subset3['index'] = df_subset3[definition].astype(str) + " (n = " + df_subset3['n'].astype(int).astype(str) + ")"
+        df_out = df_subset3.drop(columns=[definition,'n']).rename(columns = {'index':definition}).set_index(definition)
+        
+        # Null out the diagonal
+        np.fill_diagonal(df_out.values, np.nan)
+        df_out = df_out.where(~df_out.isna(), '-')
+    
+        df_out.to_csv(f'output/{output_path}/tables/state_change_{definition}.csv')
+        
         
 ######################### OUTDATED FUNCTIONS THAT MAY BE REVIVED #########################
             
