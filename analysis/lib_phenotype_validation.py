@@ -11,21 +11,25 @@ from functools import reduce
 from matplotlib import pyplot as plt
 
 
-def redact_round_table(df_in):
+def redact_round_table(df_in, nan_control=False):
     """
     Redacts counts <= 5 and rounds counts to nearest 5
     
     Arguments:
         df_in: a dataframe of integer counts 
-        
+        nan_control: If True, explicitly ignores nan. 
     Returns:
         df_out: a dataframe with counts redacted and rounded
     """
-    df_out = df_in.where(df_in > 5, np.nan).apply(
-        lambda x: 5 * round(x / 5) if ~np.isnan(x) else x
-    )
+    if nan_control==True:
+        df_out = df_in.where(df_in > 5, np.nan).apply(
+            lambda x: 5 * round(x / 5) if ~np.isnan(x) else x
+        )
+    else:
+        df_out = df_in.where(df_in > 5, np.nan).apply(
+            lambda x: 5 * round(x / 5)
+        )
     return df_out
-
 
 def import_clean(input_path, definitions, other_vars, demographic_covariates, 
                  clinical_covariates, null, date_min, date_max, 
@@ -385,7 +389,7 @@ def hist(df_in, measure, title, output_path, filepath, n_bins=30):
         counts, bins = np.histogram(df_measure[df_measure.notna()], bins=n_bins)
         formatted_bins = [f"{b} - {bins[i+1]}" for i, b in enumerate(bins[:-1])]
         df_hist = pd.DataFrame({"bins": formatted_bins, "counts": counts})
-        df_hist["counts"] = redact_round_table2(df_hist["counts"])
+        df_hist["counts"] = redact_round_table(df_hist["counts"], nan_control=True)
         plt.hist(bins[:-1], bins, weights=counts)
         plt.title(title)
         plt.savefig(
