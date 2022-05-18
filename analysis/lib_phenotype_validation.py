@@ -476,9 +476,8 @@ def report_distribution(df_clean, definitions, output_path, group=''):
                     ['mean','count']
                 )
             )
-            if avg_value.loc['count'][0] > 6:
+            if avg_value.loc['count'][0] > 5:
                 avg_value.loc['count'][0] = 5 * round(avg_value.loc['count'][0]/5)
-                print(f'Average {definition}:\n')
                 avg_value.to_csv(f'output/{output_path}/tables/avg_value.csv')
                 fig, ax = plt.subplots(figsize=(12, 8))
                 hist_data = df_clean[definition].loc[~df_clean[definition].isna()]
@@ -498,7 +497,6 @@ def report_distribution(df_clean, definitions, output_path, group=''):
             # Redact and round values
             avg_value['count'] = avg_value['count'].where(
                 avg_value['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
-            print('Averages:\n')
             avg_value.to_csv(f'output/{output_path}/tables/avg_value.csv')
             fig, ax = plt.subplots(figsize=(12, 8))
             sns.boxplot(data=df_bp,showfliers = False)
@@ -515,7 +513,6 @@ def report_distribution(df_clean, definitions, output_path, group=''):
             avg_value['count'] = avg_value['count'].where(
                 avg_value['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
             avg_value.loc[avg_value['count'].isna(), ['count','mean']] = ['-','-']
-            print(f'Averages by {group}:\n')
             avg_value.to_csv(f'output/{output_path}/tables/avg_value_{group}.csv')
             null_index = avg_value[avg_value['count'] == '-'].index.tolist()
             fig, ax = plt.subplots(figsize=(12, 8))
@@ -536,7 +533,6 @@ def report_distribution(df_clean, definitions, output_path, group=''):
                     avg_value['ct_'+definition] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
                 avg_value.loc[avg_value['ct_'+definition].isna(), 
                                     ['ct_'+definition,'avg_'+definition]] = ['-','-']
-            print(f'Averages by {group}:\n')
             avg_value.to_csv(f'output/{output_path}/tables/avg_value_{group}.csv')
             for definition in definitions:
                 null_index = []
@@ -547,7 +543,7 @@ def report_distribution(df_clean, definitions, output_path, group=''):
             sns.boxplot(x=group, y='value', hue='variable', data=df_plot, showfliers=False)
             plt.title(f'Distributions by {group}')
             plt.savefig(f'output/{output_path}/figures/distribution_{group}.png')
-    
+
     
 def records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path):
     """
