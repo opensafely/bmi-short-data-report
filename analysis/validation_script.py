@@ -82,7 +82,7 @@ def main():
     # Report time between measurement and now 
     recent_to_now(df_clean, definitions, output_path)
     # Report means over time
-    
+    means_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
     # Report means over time of out of range values 
     
     # Report distribution of height and weight for high computed BMI

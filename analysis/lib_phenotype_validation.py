@@ -604,7 +604,7 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
     fig.autofmt_xdate()
     sns.lineplot(x = 'date', y = 'value', hue='variable', data = df_all_time, ax=ax).set_title('New records by month')
     ax.legend().set_title('')
-    df_all_time.to_csv(f'output/{output_path}/tables/record_over_time.csv')
+    df_all_time.to_csv(f'output/{output_path}/tables/records_over_time.csv')
     plt.savefig(f'output/{output_path}/figures/records_over_time.png')
 
     for group in demographic_covariates + clinical_covariates:
@@ -616,8 +616,65 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
             fig.autofmt_xdate()
             sns.lineplot(x = 'date', y = definition, hue=group, data = df_time, ax=ax).set_title(f'{definition} recorded by {group} and month')
             ax.legend().set_title('')
-            df_time.to_csv(f'output/{output_path}/tables/record_over_time_{definition}_{group}.csv')
+            df_time.to_csv(f'output/{output_path}/tables/records_over_time_{definition}_{group}.csv')
             plt.savefig(f'output/{output_path}/figures/records_over_time_{definition}_{group}.png')
+            
+            
+def means_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path):
+    """
+    Reports means over time
+    
+    Arguments:
+        df_clean: a dataframe that has been cleaned using import_clean()
+        definitions: a list of derived variables to be evaluated
+        demographic_covariates: a list of demographic covariates 
+        clinical_covariates: a list of clinical covariates
+        output_path: filepath to the output folder
+       
+    Returns:
+        .csv file (underlying data)
+        .png file (line plot)
+    """
+    li_df = []
+    for definition in definitions:
+        df_grouped = df_clean.groupby(definition+'_date')[definition].agg(
+            ['count','mean']
+        ).reset_index().rename(columns={definition+'_date':'date'})
+        df_grouped['variable'] = definition
+        # Redact and round values
+        df_grouped['count'] = df_grouped['count'].where(
+            df_grouped['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
+        li_df.append(df_grouped)
+    df_all_time = pd.concat(li_df)
+    df_all_time = df_all_time[['date','variable','count','mean']]
+    del li_df 
+    
+    fig, ax = plt.subplots(figsize=(12, 8))
+    fig.autofmt_xdate()
+    df_all_time.loc[df_all_time['count'].isna(), 'mean'] = np.nan
+    sns.lineplot(x = 'date', y = 'mean', hue='variable', data = df_all_time, ax=ax).set_title('Means by month')
+    ax.legend().set_title('')
+    df_all_time.loc[df_all_time['count'].isna(), ['count','mean']] = ['-','-']
+    df_all_time.to_csv(f'output/{output_path}/tables/means_over_time.csv')
+    plt.savefig(f'output/{output_path}/figures/means_over_time.png')
+
+    for group in demographic_covariates + clinical_covariates:
+        for definition in definitions:
+            df_grouped = df_clean.groupby([definition+'_date',group])[definition].agg(
+                ['count','mean']
+            ).reset_index().rename(columns={definition+'_date':'date'})
+            # Redact and round values
+            df_grouped['count'] = df_grouped['count'].where(
+                df_grouped['count'] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
+            df_grouped.loc[df_grouped['count'].isna(), 'mean'] = np.nan
+            fig, ax = plt.subplots(figsize=(12, 8))
+            fig.autofmt_xdate()
+            sns.lineplot(x = 'date', y = 'mean', hue=group, data = df_grouped, ax=ax).set_title(f'Mean {definition} recorded by {group} and month')
+            ax.legend().set_title('')
+            df_grouped.loc[df_grouped['count'].isna(), ['count','mean']] = ['-','-']
+            df_grouped = df_grouped[['date',group,'count','mean']]
+            df_grouped.to_csv(f'output/{output_path}/tables/means_over_time_{definition}_{group}.csv')
+            plt.savefig(f'output/{output_path}/figures/means_over_time_{definition}_{group}.png')
             
             
 def recent_to_now(df_clean, definitions, output_path):
