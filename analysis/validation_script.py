@@ -113,18 +113,16 @@ def main():
         clinical_covariates, output_path,''
     )
     # Report number of records and means over time of high computed BMI 
-    for definition in definitions:
-        df_temp = df_clean.loc[df_clean[definition] > max_range]
-        records_over_time(
-            df_temp, definitions, demographic_covariates, 
-            clinical_covariates, output_path,'_greater_than_max'
-        )
-        means_over_time(
-            df_temp, definitions, demographic_covariates, 
-            clinical_covariates, output_path,'_greater_than_max'
-        )
-    # Report distribution of height and weight for high computed BMI
     df_high_computed = df_clean.loc[df_clean['backend_computed_bmi'] > max_range]
+    records_over_time(
+        df_high_computed, ['backend_computed_bmi'], demographic_covariates, 
+        clinical_covariates, output_path,'_greater_than_max'
+    )
+    means_over_time(
+        df_high_computed, ['backend_computed_bmi'], demographic_covariates, 
+        clinical_covariates, output_path,'_greater_than_max'
+    )
+    # Report distribution of height and weight for high computed BMI
     count_table(
         df_high_computed, 'height_backend', 
         output_path, 'height_high_computed_bmi'
