@@ -534,13 +534,13 @@ def report_out_of_range(df_clean, definitions, threshold, null, output_path,
         
     for definition in definitions: 
         if less_than == True:
-            df_oor = df_clean
+            df_oor = df_clean.copy()
             df_oor.loc[(df_oor[definition] < threshold), "out_of_range_"+definition] = 1
             filepath = "less_than_min"
             df_cdf = df_oor[[definition]].loc[df_oor[definition] < threshold]
             cdf(df_cdf, definition, output_path, f'{filepath}_{definition}.png')
         else: 
-            df_oor = df_clean
+            df_oor = df_clean.copy()
             df_oor.loc[(df_oor[definition] > threshold), "out_of_range_"+definition] = 1
             filepath = "greater_than_max"
             df_cdf = df_oor[[definition]].loc[df_oor[definition] > threshold]
@@ -605,8 +605,9 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
     fig.autofmt_xdate()
     sns.lineplot(x = 'date', y = 'value', hue='variable', data = df_all_time, ax=ax).set_title('New records by month')
     ax.legend().set_title('')
-    df_all_time.to_csv(f'output/{output_path}/tables/records_over_time{filepath}.csv')
-    plt.savefig(f'output/{output_path}/figures/records_over_time{filepath}.png')
+    if len(df_all_time) > 0:
+        df_all_time.to_csv(f'output/{output_path}/tables/records_over_time{filepath}.csv')
+        plt.savefig(f'output/{output_path}/figures/records_over_time{filepath}.png')
 
     for group in demographic_covariates + clinical_covariates:
         for definition in definitions:
@@ -617,8 +618,9 @@ def records_over_time(df_clean, definitions, demographic_covariates, clinical_co
             fig.autofmt_xdate()
             sns.lineplot(x = 'date', y = definition, hue=group, data = df_time, ax=ax).set_title(f'{definition} recorded by {group} and month')
             ax.legend().set_title('')
-            df_time.to_csv(f'output/{output_path}/tables/records_over_time_{definition}_{group}{filepath}.csv')
-            plt.savefig(f'output/{output_path}/figures/records_over_time_{definition}_{group}{filepath}.png')
+            if len(df_time) > 0:
+                df_time.to_csv(f'output/{output_path}/tables/records_over_time_{definition}_{group}{filepath}.csv')
+                plt.savefig(f'output/{output_path}/figures/records_over_time_{definition}_{group}{filepath}.png')
             
             
 def means_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path, filepath):
@@ -657,8 +659,9 @@ def means_over_time(df_clean, definitions, demographic_covariates, clinical_cova
     sns.lineplot(x = 'date', y = 'mean', hue='variable', data = df_all_time, ax=ax).set_title('Means by month')
     ax.legend().set_title('')
     df_all_time.loc[df_all_time['count'].isna(), ['count','mean']] = ['-','-']
-    df_all_time.to_csv(f'output/{output_path}/tables/means_over_time{filepath}.csv')
-    plt.savefig(f'output/{output_path}/figures/means_over_time{filepath}.png')
+    if len(df_all_time) > 0:
+        df_all_time.to_csv(f'output/{output_path}/tables/means_over_time{filepath}.csv')
+        plt.savefig(f'output/{output_path}/figures/means_over_time{filepath}.png')
 
     for group in demographic_covariates + clinical_covariates:
         for definition in definitions:
@@ -675,9 +678,10 @@ def means_over_time(df_clean, definitions, demographic_covariates, clinical_cova
             ax.legend().set_title('')
             df_grouped.loc[df_grouped['count'].isna(), ['count','mean']] = ['-','-']
             df_grouped = df_grouped[['date',group,'count','mean']]
-            df_grouped.to_csv(f'output/{output_path}/tables/means_over_time_{definition}_{group}{filepath}.csv')
-            plt.savefig(f'output/{output_path}/figures/means_over_time_{definition}_{group}{filepath}.png')
-            
+            if len(df_grouped) > 0:
+                df_grouped.to_csv(f'output/{output_path}/tables/means_over_time_{definition}_{group}{filepath}.csv')
+                plt.savefig(f'output/{output_path}/figures/means_over_time_{definition}_{group}{filepath}.png')
+                
             
 def recent_to_now(df_clean, definitions, output_path):
     """
