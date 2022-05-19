@@ -85,7 +85,12 @@ def main():
     
     # Report means over time of out of range values 
     
-    # Report distribution of height and weight for high BMI
+    # Report distribution of height and weight for high computed BMI
+    df_high_computed = df_clean.loc[df_clean['backend_computed_bmi'] > max_range]
+    count_table(df_high_computed, 'height_backend', output_path, 'height_high_computed_bmi')
+    cdf(df_high_computed, 'height_backend', output_path, 'height_high_computed_bmi')
+    count_table(df_high_computed, 'weight_backend', output_path, 'weight_high_computed_bmi')
+    cdf(df_high_computed, 'weight_backend', output_path, 'weight_high_computed_bmi')
         
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
