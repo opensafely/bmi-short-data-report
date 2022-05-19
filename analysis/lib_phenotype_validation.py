@@ -487,7 +487,7 @@ def report_distribution(df_clean, definitions, output_path, group=''):
                      output_path, 
                      'distribution')
             else:
-                print(f"Error plotting histogram for measure:{measure}, path:'distribution'")
+                print(f"Error plotting histogram for measure:{measure}, path:distribution")
 
         else:
             df_bp = df_clean[definitions]
@@ -531,8 +531,7 @@ def report_distribution(df_clean, definitions, output_path, group=''):
                 # Redact and round values
                 avg_value['ct_'+definition] = avg_value['ct_'+definition].where(
                     avg_value['ct_'+definition] > 5, np.nan).apply(lambda x: 5 * round(x/5) if ~np.isnan(x) else x)
-                avg_value.loc[avg_value['ct_'+definition].isna(), 
-                                    ['ct_'+definition,'avg_'+definition]] = ['-','-']
+                avg_value.loc[avg_value['ct_'+definition].isna(), ['ct_'+definition,'avg_'+definition]] = ['-','-']
             avg_value.to_csv(f'output/{output_path}/tables/avg_value_{group}.csv')
             for definition in definitions:
                 null_index = []
@@ -544,7 +543,74 @@ def report_distribution(df_clean, definitions, output_path, group=''):
             plt.title(f'Distributions by {group}')
             plt.savefig(f'output/{output_path}/figures/distribution_{group}.png')
 
+
+def report_out_of_range(df_clean, definitions, threshold, null, output_path, 
+                        group='', less_than=True):
+    """
+    Reports number of measurements outside of defined range
     
+    Arguments:
+        df_clean: dataframe cleaned using import_clean()
+        definitions: a list of derived variables to be evaluated
+        threshold: min_range or max_range
+        null: a list of values that are equivalent to null
+        output_path: filepath to the output folder
+        group: categories across which to compare distributions; if blank, 
+               looks across the whole definition
+        less_than: If True, subsets to data less than the threshold. 
+                   If False, subsets to data greater than the threshold.
+        
+    Returns:
+        .csv files (tabular output of counts)
+        .png files (CDF plots)
+    """
+    
+    li_dfs = []
+        
+    for definition in definitions: 
+        if less_than == True:
+            df_oor = df_clean
+            df_oor.loc[(df_oor[definition] < threshold), "out_of_range_"+definition] = 1
+            filepath = "less_than_min"
+            df_cdf = df_oor[[definition]].loc[df_oor[definition] < threshold]
+            cdf(df_cdf, definition, output_path, f'{filepath}_{definition}.png')
+        else: 
+            df_oor = df_clean
+            df_oor.loc[(df_oor[definition] > threshold), "out_of_range_"+definition] = 1
+            filepath = "greater_than_max"
+            df_cdf = df_oor[[definition]].loc[df_oor[definition] > threshold]
+            cdf(df_cdf, definition, output_path, f'{filepath}_{definition}.png')
+           
+        # Make definitions null if not out of range or empty
+        df_oor["oor_" + definition] = df_oor[definition]
+        df_oor.loc[(df_oor["out_of_range_"+definition] != 1) | (df_oor[definition].isin(null)), "oor_" + definition] = np.nan
+        if group == '':
+            df_out = pd.DataFrame(
+                df_oor["oor_" + definition].agg(['count','mean'])
+            )
+            if df_out.loc['count']["oor_" + definition] > 5:
+                df_out.loc['count']["oor_" + definition] = 5 * round(df_out.loc['count']["oor_" + definition]/5)
+            else:
+                df_out["oor_" + definition] = '-'
+        else:
+            df_out = df_oor.groupby(group)["oor_" + definition].agg(
+                [('count', 'count'),('mean', 'mean')]
+            ).add_suffix("_"+definition)
+            df_out.loc[df_out["count_" + definition] > 5, "count_" + definition] = 5 * round(df_out["count_" + definition]/5)
+            df_out.loc[df_out["count_" + definition] < 6, ["count_" + definition, "mean_" + definition]] = ['-','-']
+        li_dfs.append(df_out)
+    
+    if len(definitions) == 1:    
+        df_out.to_csv(f'output/{output_path}/tables/{filepath}.csv')
+    else:
+        df_merged = reduce(lambda left,right: pd.merge(left,right,left_index=True, right_index=True), li_dfs)
+        del li_dfs
+        if group == '':    
+            df_merged.to_csv(f'output/{output_path}/tables/{filepath}.csv')
+        else:
+            df_merged.to_csv(f'output/{output_path}/tables/{filepath}_{group}.csv')
+
+
 def records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path):
     """
     Count the number of records over time

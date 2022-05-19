@@ -33,8 +33,6 @@ code_dict = {
 other_vars = [
     "height_backend",
     "weight_backend",
-    "height_backend_date",
-    "weight_backend_date",
 ]
 
 # Dates
@@ -74,7 +72,11 @@ def main():
     for group in demographic_covariates + clinical_covariates:
         report_distribution(df_clean, definitions, output_path, group)
     # Count values out of range
-    
+    report_out_of_range(df_clean, definitions, min_range, null, output_path, group='', less_than=True)
+    report_out_of_range(df_clean, definitions, max_range, null, output_path, group='', less_than=False)
+    for group in demographic_covariates + clinical_covariates:
+        report_out_of_range(df_clean, definitions, min_range, null, output_path, group, less_than=True)
+        report_out_of_range(df_clean, definitions, max_range, null, output_path, group, less_than=False)
     # Report new records over time
     records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
     # Report time between measurement and now 
