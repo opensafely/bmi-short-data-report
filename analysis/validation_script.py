@@ -58,39 +58,89 @@ output_path = 'phenotype_validation_bmi'
 ########################## SPECIFY ANALYSES TO RUN HERE ##############################
 
 def main():
-    df_clean = import_clean(input_path, definitions, other_vars, demographic_covariates, 
-                        clinical_covariates, null, date_min, date_max, 
-                        time_delta, output_path, code_dict, dates)
+    df_clean = import_clean(
+        input_path, definitions, other_vars, demographic_covariates, 
+        clinical_covariates, null, date_min, date_max, 
+        time_delta, output_path, code_dict, dates
+    )
     # Count patients with records
-    patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
+    patient_counts(
+        df_clean, definitions, demographic_covariates, 
+        clinical_covariates, output_path
+    )
     # Count patients without records
-    patient_counts(df_clean, definitions, demographic_covariates, clinical_covariates, output_path, missing=True)
+    patient_counts(
+        df_clean, definitions, demographic_covariates, 
+        clinical_covariates, output_path, missing=True
+    )
     # Count number of measurements 
-    num_measurements(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
+    num_measurements(
+        df_clean, definitions, demographic_covariates, 
+        clinical_covariates, output_path
+    )
     # Report distributions
     report_distribution(df_clean, definitions, output_path, group='')
     for group in demographic_covariates + clinical_covariates:
         report_distribution(df_clean, definitions, output_path, group)
     # Count values out of range
-    report_out_of_range(df_clean, definitions, min_range, null, output_path, group='', less_than=True)
-    report_out_of_range(df_clean, definitions, max_range, null, output_path, group='', less_than=False)
+    report_out_of_range(
+        df_clean, definitions, min_range, 
+        null, output_path, group='', less_than=True
+    )
+    report_out_of_range(
+        df_clean, definitions, max_range, 
+        null, output_path, group='', less_than=False
+    )
     for group in demographic_covariates + clinical_covariates:
-        report_out_of_range(df_clean, definitions, min_range, null, output_path, group, less_than=True)
-        report_out_of_range(df_clean, definitions, max_range, null, output_path, group, less_than=False)
+        report_out_of_range(
+            df_clean, definitions, min_range, 
+            null, output_path, group, less_than=True
+        )
+        report_out_of_range(
+            df_clean, definitions, max_range, 
+            null, output_path, group, less_than=False
+        )
     # Report new records over time
-    records_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
+    records_over_time(
+        df_clean, definitions, demographic_covariates, 
+        clinical_covariates, output_path,''
+    )
     # Report time between measurement and now 
     recent_to_now(df_clean, definitions, output_path)
     # Report means over time
-    means_over_time(df_clean, definitions, demographic_covariates, clinical_covariates, output_path)
-    # Report means over time of out of range values 
-    
+    means_over_time(
+        df_clean, definitions, demographic_covariates, 
+        clinical_covariates, output_path,''
+    )
+    # Report number of records and means over time of high computed BMI 
+    for definition in definitions:
+        df_temp = df_clean.loc[df_clean[definition] > max_range]
+        records_over_time(
+            df_temp, definitions, demographic_covariates, 
+            clinical_covariates, output_path,'_greater_than_max'
+        )
+        means_over_time(
+            df_temp, definitions, demographic_covariates, 
+            clinical_covariates, output_path,'_greater_than_max'
+        )
     # Report distribution of height and weight for high computed BMI
     df_high_computed = df_clean.loc[df_clean['backend_computed_bmi'] > max_range]
-    count_table(df_high_computed, 'height_backend', output_path, 'height_high_computed_bmi')
-    cdf(df_high_computed, 'height_backend', output_path, 'height_high_computed_bmi')
-    count_table(df_high_computed, 'weight_backend', output_path, 'weight_high_computed_bmi')
-    cdf(df_high_computed, 'weight_backend', output_path, 'weight_high_computed_bmi')
+    count_table(
+        df_high_computed, 'height_backend', 
+        output_path, 'height_high_computed_bmi'
+    )
+    cdf(
+        df_high_computed, 'height_backend', 
+        output_path, 'height_high_computed_bmi'
+    )
+    count_table(
+        df_high_computed, 'weight_backend', 
+        output_path, 'weight_high_computed_bmi'
+    )
+    cdf(
+        df_high_computed, 'weight_backend', 
+        output_path, 'weight_high_computed_bmi'
+    )
         
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
