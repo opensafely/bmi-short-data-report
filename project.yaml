@@ -39,54 +39,6 @@ actions:
       moderately_sensitive:
         notebook: output/report_bmi.html
         
-  execute_validation_analyses_height:
-    run: python:latest python analysis/validation_script_height.py
-    needs: [preprocess_inputs]
-    outputs:
-      moderately_sensitive: 
-        tables: output/phenotype_validation_height/tables/*.csv
-        figures: output/phenotype_validation_height/figures/*.png
-        
-  generate_report_height:
-    run: python:latest jupyter nbconvert /workspace/notebooks/report_height.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
-    needs: [execute_validation_analyses_height]
-    outputs:
-      moderately_sensitive:
-        notebook: output/report_height.html
-        
-  execute_validation_analyses_weight:
-    run: python:latest python analysis/validation_script_weight.py
-    needs: [preprocess_inputs]
-    outputs:
-      moderately_sensitive: 
-        tables: output/phenotype_validation_weight/tables/*.csv
-        figures: output/phenotype_validation_weight/figures/*.png
-        
-  generate_report_weight:
-    run: python:latest jupyter nbconvert /workspace/notebooks/report_weight.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
-    needs: [execute_validation_analyses_weight]
-    outputs:
-      moderately_sensitive:
-        notebook: output/report_weight.html
-        
-  generate_histograms:
-    run: python:latest python analysis/validation_histograms.py
-    needs: [preprocess_inputs]
-    outputs:
-      moderately_sensitive: 
-        tables1: output/histograms/tables/hist*.csv
-        tables2: output/histograms/tables/ct*.csv
-        figures1: output/histograms/figures/hist*.png
-        figures2: output/histograms/figures/cdf*.png
- 
-  execute_validation_recency:
-    run: python:latest python analysis/validation_recency.py
-    needs: [preprocess_inputs]
-    outputs:
-      moderately_sensitive: 
-        tables: output/histograms/tables/*.csv
-        figures: output/histograms/figures/*.png
-  
   generate_report_eventcounts:
     run: python:latest jupyter nbconvert /workspace/notebooks/report_event_counts.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
     needs: [generate_event_counts]
