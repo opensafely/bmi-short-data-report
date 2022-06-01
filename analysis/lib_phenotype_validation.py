@@ -74,9 +74,11 @@ def cdf(df_in, measure, output_path, filepath):
     # Compute PDF
     df_freq["pdf"] = df_freq["frequency"] / sum(df_freq["frequency"])
     # Compute CDF
-    df_freq["cdf"] = df_freq["pdf"].cumsum()
-    df_freq = df_freq.reset_index()
-    df_freq.plot(x=measure, y="cdf", grid=True)
+    df_freq["cdf"] = df_freq["pdf"].cumsum()    
+    df_min = pd.DataFrame({measure: [min(df_stats[measure], default=0)], 'cdf': [0]})
+    df_cdf = df_min.append(df_freq[1:].reset_index())
+    plt.step(x = measure, y = 'cdf', data=df_cdf)
+    plt.ylim(bottom=0)
     plt.title(f"CDF of {measure}")
     plt.savefig(f"output/{output_path}/figures/cdf_{filepath}.png", bbox_inches="tight")
     plt.close()
