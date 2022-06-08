@@ -5,10 +5,7 @@ from codelists import *
 
 from config import end_date
 
-clinical_variables = dict(
-    # ----
-    # BMI
-    # ----
+derived_bmi_variables = dict(
     # BMI using OpenSAFELY algorithm - returns latest in period
     derived_bmi1=patients.most_recent_bmi(
         on_or_before=end_date,
@@ -35,6 +32,9 @@ clinical_variables = dict(
         )
         for n in range(2, 11)
     },
+)
+
+recorded_bmi_variables = dict(
     # Recorded BMI (coded values)
     recorded_bmi1=patients.with_these_clinical_events(
         bmi_code_snomed,
@@ -62,7 +62,10 @@ clinical_variables = dict(
             },
         )
         for n in range(2, 11)
-    },
+    },  
+)
+
+snomed_hw_variables = dict(
     # Weight (SNOMED)
     weight1=patients.with_these_clinical_events(
         weight_codes_snomed,
@@ -94,44 +97,6 @@ clinical_variables = dict(
     **{
         f"weight_age{n}": patients.age_as_of(
             f"weight{n}_date",
-            return_expectations={
-                "rate" : "universal",
-                "int" : {"distribution" : "population_ages"}
-            }
-        )
-        for n in range(1,11)
-    },
-    # Weight (CTV3 definition in backend)
-    weight_backend1=patients.with_these_clinical_events(
-        weight_codes_backend,
-        on_or_before=end_date,
-        find_last_match_in_period=True,
-        returning="numeric_value",
-        include_date_of_match=True,
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "incidence": 0.7,
-            "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
-        },
-    ),
-    **{
-        f"weight_backend{n}": patients.with_these_clinical_events(
-            weight_codes_backend,
-            on_or_before=f"weight_backend{n-1}_date - 1 day",
-            find_last_match_in_period=True,
-            returning="numeric_value",
-            include_date_of_match=True,
-            date_format="YYYY-MM-DD",
-            return_expectations={
-                "incidence": 0.7,
-                "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
-            },
-        )
-        for n in range(2, 11)
-    },
-    **{
-        f"weight_backend_age{n}": patients.age_as_of(
-            f"weight_backend{n}_date",
             return_expectations={
                 "rate" : "universal",
                 "int" : {"distribution" : "population_ages"}
@@ -177,6 +142,47 @@ clinical_variables = dict(
         )
         for n in range(1,11)
     },
+)
+
+ctv3_hw_variables = dict(
+    # Weight (CTV3 definition in backend)
+    weight_backend1=patients.with_these_clinical_events(
+        weight_codes_backend,
+        on_or_before=end_date,
+        find_last_match_in_period=True,
+        returning="numeric_value",
+        include_date_of_match=True,
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "incidence": 0.7,
+            "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
+        },
+    ),
+    **{
+        f"weight_backend{n}": patients.with_these_clinical_events(
+            weight_codes_backend,
+            on_or_before=f"weight_backend{n-1}_date - 1 day",
+            find_last_match_in_period=True,
+            returning="numeric_value",
+            include_date_of_match=True,
+            date_format="YYYY-MM-DD",
+            return_expectations={
+                "incidence": 0.7,
+                "float": {"distribution": "normal", "mean": 70.0, "stddev": 10.0},
+            },
+        )
+        for n in range(2, 11)
+    },
+    **{
+        f"weight_backend_age{n}": patients.age_as_of(
+            f"weight_backend{n}_date",
+            return_expectations={
+                "rate" : "universal",
+                "int" : {"distribution" : "population_ages"}
+            }
+        )
+        for n in range(1,11)
+    },
     # Height (CTV3 definition in backend)
     height_backend1=patients.with_these_clinical_events(
         height_codes_backend,
@@ -215,6 +221,9 @@ clinical_variables = dict(
         )
         for n in range(1,11)
     },
+)
+
+clinical_variables = dict(
     # -------------------
     # Clinical conditions
     # -------------------
