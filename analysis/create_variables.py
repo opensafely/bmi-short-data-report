@@ -403,11 +403,11 @@ demographic_variables = dict(
     imd = patients.categorised_as(
         {
             "0": "DEFAULT",
-            "1 (most deprived)": "imd >= 0 AND imd < 32800*1/5",
-            "2": "imd >= 32800*1/5 AND imd < 32800*2/5",
-            "3": "imd >= 32800*2/5 AND imd < 32800*3/5",
-            "4": "imd >= 32800*3/5 AND imd < 32800*4/5",
-            "5 (least deprived)": "imd >= 32800*4/5 AND imd <= 32800",
+            "1": "index_of_multiple_deprivation >= 0 AND index_of_multiple_deprivation < 32800*1/5",
+            "2": "index_of_multiple_deprivation >= 32800*1/5 AND index_of_multiple_deprivation < 32800*2/5",
+            "3": "index_of_multiple_deprivation >= 32800*2/5 AND index_of_multiple_deprivation < 32800*3/5",
+            "4": "index_of_multiple_deprivation >= 32800*3/5 AND index_of_multiple_deprivation < 32800*4/5",
+            "5": "index_of_multiple_deprivation >= 32800*4/5 AND index_of_multiple_deprivation <= 32800",
         },
         index_of_multiple_deprivation = patients.address_as_of(
             "index_date",
