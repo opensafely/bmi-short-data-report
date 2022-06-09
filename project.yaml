@@ -46,28 +46,39 @@ actions:
     needs: [generate_study_population_derived_bmi]
     outputs:
       highly_sensitive:
-        cohort_with_duration: output/data/input_derived_bmi_processed.feather
+        cohort_with_duration: output/data/input_processed_derived_bmi.feather
 
   preprocess_recorded_bmi_input:
     run: python:latest python analysis/preprocess_bmi_inputs.py "recorded_bmi" --output-format feather
     needs: [generate_study_population_recorded_bmi]
     outputs:
       highly_sensitive:
-        cohort_with_duration: output/data/input_recorded_bmi_processed.feather
+        cohort_with_duration: output/data/input_processed_recorded_bmi.feather
 
   preprocess_computed_bmi_input:
     run: python:latest python analysis/preprocess_hw_inputs.py "height" "weight" "snomed" "computed_bmi" --output-format feather
     needs: [generate_study_population_snomed_hw]
     outputs:
       highly_sensitive:
-        cohort_with_duration: output/data/input_computed_bmi_processed.feather
+        cohort_with_duration: output/data/input_processed_computed_bmi.feather
 
   preprocess_backend_computed_bmi_input:
     run: python:latest python analysis/preprocess_hw_inputs.py "height_backend" "weight_backend" "ctv3" "backend_computed_bmi" --output-format feather
     needs: [generate_study_population_ctv3_hw]
     outputs:
       highly_sensitive:
-        cohort_with_duration: output/data/input_backend_computed_bmi_processed.feather
+        cohort_with_duration: output/data/input_processed_backend_computed_bmi.feather
+
+  join_cohorts:
+    run: >
+      cohort-joiner:v0.0.35
+        --lhs output/data/input_processed*.feather
+        --rhs output/data/input.feather
+        --output-dir output/joined
+    needs: [generate_study_population, preprocess_derived_bmi_input, preprocess_recorded_bmi_input, preprocess_computed_bmi_input, preprocess_backend_computed_bmi_input]
+    outputs:
+      highly_sensitive:
+        cohort: output/joined/input_processed*.feather
 
   # preprocess_inputs:
   #   run: python:latest python analysis/preprocess_inputs.py --output-format feather

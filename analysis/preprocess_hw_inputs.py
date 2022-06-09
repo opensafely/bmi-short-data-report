@@ -53,4 +53,4 @@ df_output.loc[
 # Adjust for division by 0 (return 0)
 df_output.loc[~np.isfinite(df_output[f'{bmi}']), f'{bmi}'] = 0
 
-df_output.to_feather(f'output/data/input_{bmi}_processed.feather')
+df_output.to_feather(f'output/data/input_processed_{bmi}.feather')
