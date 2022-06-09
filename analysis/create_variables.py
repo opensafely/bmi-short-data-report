@@ -3,12 +3,10 @@ from cohortextractor import (
 )
 from codelists import *
 
-from config import end_date
-
 derived_bmi_variables = dict(
     # BMI using OpenSAFELY algorithm - returns latest in period
     derived_bmi1=patients.most_recent_bmi(
-        on_or_before=end_date,
+        on_or_before="index_date",
         minimum_age_at_measurement=18,
         include_measurement_date=True,
         date_format="YYYY-MM-DD",
@@ -38,7 +36,7 @@ recorded_bmi_variables = dict(
     # Recorded BMI (coded values)
     recorded_bmi1=patients.with_these_clinical_events(
         bmi_code_snomed,
-        on_or_before=end_date,
+        on_or_before="index_date",
         find_last_match_in_period=True,
         returning="numeric_value",
         include_date_of_match=True,
@@ -69,7 +67,7 @@ snomed_hw_variables = dict(
     # Weight (SNOMED)
     weight1=patients.with_these_clinical_events(
         weight_codes_snomed,
-        on_or_before=end_date,
+        on_or_before="index_date",
         find_last_match_in_period=True,
         returning="numeric_value",
         include_date_of_match=True,
@@ -107,7 +105,7 @@ snomed_hw_variables = dict(
     # Height (SNOMED)
     height1=patients.with_these_clinical_events(
         height_codes_snomed,
-        on_or_before=end_date,
+        on_or_before="index_date",
         find_last_match_in_period=True,
         returning="numeric_value",
         include_date_of_match=True,
@@ -148,7 +146,7 @@ ctv3_hw_variables = dict(
     # Weight (CTV3 definition in backend)
     weight_backend1=patients.with_these_clinical_events(
         weight_codes_backend,
-        on_or_before=end_date,
+        on_or_before="index_date",
         find_last_match_in_period=True,
         returning="numeric_value",
         include_date_of_match=True,
@@ -186,7 +184,7 @@ ctv3_hw_variables = dict(
     # Height (CTV3 definition in backend)
     height_backend1=patients.with_these_clinical_events(
         height_codes_backend,
-        on_or_before=end_date,
+        on_or_before="index_date",
         find_last_match_in_period=True,
         returning="numeric_value",
         include_date_of_match=True,

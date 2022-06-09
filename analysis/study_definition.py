@@ -2,12 +2,12 @@ from cohortextractor import StudyDefinition, patients, codelist, codelist_from_c
 from create_variables import demographic_variables, clinical_variables
 from codelists import *
 
-from config import start_date, end_date
+from config import *
 
 study = StudyDefinition(
-    index_date=start_date,
+    index_date=index_date,
     default_expectations={
-        "date": {"earliest": start_date, "latest": end_date},
+        "date": {"earliest": '2015-01-01', "latest": index_date},
         "rate": "uniform",
         "incidence": 0.65,
     },
@@ -19,13 +19,13 @@ study = StudyDefinition(
     ),
     # Deregistration date (to censor these patients in longitudinal analyses)
     dereg_date=patients.date_deregistered_from_all_supported_practices(
-        between=[start_date, end_date],
+        on_or_before=index_date,
         date_format="YYYY-MM-DD",
         return_expectations={"date": {"earliest": "index_date"}},
     ),
     # Death date (to censor these patients in longitudinal analyses)
     died_date_ons=patients.died_from_any_cause(
-        between=[start_date, end_date],
+        on_or_before=index_date,
         returning="date_of_death",
         date_format="YYYY-MM-DD",
         return_expectations={"date": {"earliest": "index_date"}},
