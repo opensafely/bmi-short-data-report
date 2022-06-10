@@ -7,17 +7,17 @@ from codelists import *
 population_spec = dict(
     population=patients.satisfying(
         """
-        (sex = "M" OR sex = "F") AND
-        (age >= 18 AND age <= 110)
+        (sex_pop = "M" OR sex_pop = "F") AND
+        (age_pop >= 18 AND age_pop <= 110)
         """,
-        age=patients.age_as_of(
+        age_pop=patients.age_as_of(
             "index_date",
             return_expectations={
                 "rate": "universal",
                 "int": {"distribution": "population_ages"},
             },
         ),
-        sex=patients.sex(
+        sex_pop=patients.sex(
             return_expectations={
                 "rate": "universal",
                 "category": {"ratios": {"M": 0.5, "F": 0.5}},
