@@ -1,5 +1,5 @@
 from cohortextractor import StudyDefinition, patients, codelist, codelist_from_csv, combine_codelists  # NOQA
-from create_variables import *
+from create_variables import demographic_variables, clinical_variables
 from codelists import *
 
 from config import *
@@ -11,9 +11,12 @@ study = StudyDefinition(
         "rate": "uniform",
         "incidence": 0.65,
     },
-
-    **population_spec,
-
+    population=patients.satisfying(
+        """
+        (sex = "M" OR sex = "F") AND
+        (age >= 18 AND age <= 110)
+        """
+    ),
     # Deregistration date (to censor these patients in longitudinal analyses)
     dereg_date=patients.date_deregistered_from_all_supported_practices(
         on_or_before=index_date,
