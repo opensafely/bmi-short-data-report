@@ -3,6 +3,29 @@ from cohortextractor import (
 )
 from codelists import *
 
+# Population
+population_spec = dict(
+    population=patients.satisfying(
+        """
+        (sex = "M" OR sex = "F") AND
+        (age >= 18 AND age <= 110)
+        """,
+        age=patients.age_as_of(
+            "index_date",
+            return_expectations={
+                "rate": "universal",
+                "int": {"distribution": "population_ages"},
+            },
+        ),
+        sex=patients.sex(
+            return_expectations={
+                "rate": "universal",
+                "category": {"ratios": {"M": 0.5, "F": 0.5}},
+            }
+        ),
+    ),
+)
+
 derived_bmi_variables = dict(
     # BMI using OpenSAFELY algorithm - returns latest in period
     derived_bmi1=patients.most_recent_bmi(

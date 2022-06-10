@@ -11,26 +11,8 @@ study = StudyDefinition(
         "rate": "uniform",
         "incidence": 0.65,
     },
-    population=patients.satisfying(
-        """
-        (sex = "M" OR sex = "F") AND
-        (age >= 18 AND age <= 110)
-        """,
-        age=patients.age_as_of(
-            "index_date",
-            return_expectations={
-                "rate": "universal",
-                "int": {"distribution": "population_ages"},
-            },
-        ),
-        sex=patients.sex(
-            return_expectations={
-                "rate": "universal",
-                "category": {"ratios": {"M": 0.5, "F": 0.5}},
-            }
-        ),
-    ),
-
+    
+    **population_spec,
     **ctv3_hw_variables,
 
 )

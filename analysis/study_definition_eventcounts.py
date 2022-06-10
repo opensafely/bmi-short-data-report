@@ -16,12 +16,7 @@ study = StudyDefinition(
         "rate": "uniform",
         "incidence": 0.65,
     },
-    population=patients.satisfying(
-        """
-        (sex = "M" OR sex = "F") AND
-        (age >= 18 AND age <= 110)
-        """,
-    ),
+    **population_spec,
     # Deregistration date (to censor these patients in longitudinal analyses)
     dereg_date=patients.date_deregistered_from_all_supported_practices(
         on_or_before=index_date,
