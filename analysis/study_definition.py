@@ -1,5 +1,5 @@
 from cohortextractor import StudyDefinition, patients, codelist, codelist_from_csv, combine_codelists  # NOQA
-from create_variables import demographic_variables, clinical_variables
+from create_variables import *
 from codelists import *
 
 from config import *
@@ -11,7 +11,7 @@ study = StudyDefinition(
         "rate": "uniform",
         "incidence": 0.65,
     },
-    
+
     **population_spec,
 
     # Deregistration date (to censor these patients in longitudinal analyses)
