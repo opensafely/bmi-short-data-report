@@ -100,6 +100,24 @@ def distribution(df_input, definition,
         df_group_dist = df_group_dist[['lower_extreme','q25','median','q75','upper_extreme']]
         df_group_dist.to_csv(f'output/validation/tables/{definition}/{definition}_{group}_distribution.csv')
 
+
+def cdf(df_input, definition):
+    # Compute frequency
+    df_stats = df_input[[definition]]
+    df_freq = (
+        df_stats.groupby(definition)[definition]
+        .agg("count")
+        .pipe(pd.DataFrame)
+        .rename(columns={definition: "frequency"})
+    )
+    # Compute PDF
+    df_freq["pdf"] = df_freq["frequency"] / sum(df_freq["frequency"])
+    # Compute CDF
+    df_freq["cdf"] = df_freq["pdf"].cumsum()
+    df_freq = df_freq.reset_index()
+    df_freq.to_csv(f'output/validation/tables/{definition}/{definition}_cdf_data.csv')
+
+
 def less_than_min(df_input, definition, min_value, 
                   demographic_covariates, clinical_covariates):
     # Overall

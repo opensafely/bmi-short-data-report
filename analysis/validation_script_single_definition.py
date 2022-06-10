@@ -38,6 +38,10 @@ def main():
     greater_than_max(
         df_input, definition, min_value, demographic_covariates, clinical_covariates
     )
+    cdf(df_input, definition)
+    distribution(
+        df_input, definition, demographic_covariates, clinical_covariates
+    )
     records_over_time(
         df_input, definition, demographic_covariates, clinical_covariates
     )
