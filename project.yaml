@@ -102,3 +102,12 @@ actions:
       moderately_sensitive: 
         tables: output/validation/tables/backend_computed_bmi/*.csv
         
+  generate_dataset_report_recorded_bmi:
+    run: >
+      dataset-report:v0.0.19
+        --input-files output/joined/input_processed_recorded_bmi.feather
+        --output-dir output/joined
+    needs: [join_cohorts]
+    outputs:
+      moderately_sensitive:
+        dataset_report: output/joined/input_processed_recorded_bmi.html
