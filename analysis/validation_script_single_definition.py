@@ -49,36 +49,6 @@ def main():
         df_input, definition, demographic_covariates, clinical_covariates
     )
     recent_to_now(df_input, definition)
-    if (definition == "backend_computed_bmi") | (definition == "computed_bmi"):
-        # Report number of records and means over time of high computed BMI 
-        df_high_computed = df_input.loc[df_input[definition] > max_value].rename(
-            columns = {
-                definition:"high_"+definition, 
-                definition+"_date":"high_"+definition+"_date",
-                }
-        )
-        # Check whether output paths exist or not, create if missing
-        filepath = f'output/validation/tables/high_{definition}'
-        exists = os.path.exists(filepath)
-        if not exists:
-            os.makedirs(filepath)
-        records_over_time(
-            df_high_computed, "high_"+definition, demographic_covariates, clinical_covariates
-        )
-        means_over_time(
-            df_high_computed, "high_"+definition, demographic_covariates, clinical_covariates
-        )
-        # Report distribution of height and weight for high computed BMI
-        if definition == "backend_computed_bmi":
-            count_table(df_high_computed, "height_backend", f"high_{definition}")
-            cdf(df_high_computed, "height_backend", f"high_{definition}")
-            count_table(df_high_computed, "weight_backend", f"high_{definition}")
-            cdf(df_high_computed, "weight_backend", f"high_{definition}")
-        else:
-            count_table(df_high_computed, "height", f"high_{definition}")
-            cdf(df_high_computed, "height", f"high_{definition}")
-            count_table(df_high_computed, "weight", f"high_{definition}")
-            cdf(df_high_computed, "weight", f"high_{definition}")
 
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 

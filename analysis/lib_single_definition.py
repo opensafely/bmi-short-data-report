@@ -9,11 +9,12 @@ def redact(df_in, var):
 
 
 def import_clean(input_path, definition, time_delta,
-                 demographic_covariates, clinical_covariates):
+                 demographic_covariates, clinical_covariates,
+                 other_variables = []):
     df_input = pd.read_feather(
         input_path,
         columns = ['patient_id'] + [definition] + [definition+'_date'] + 
-                   demographic_covariates + clinical_covariates
+                   demographic_covariates + clinical_covariates + other_variables
     )
     # Create order for categorical variables
     for group in demographic_covariates + clinical_covariates:

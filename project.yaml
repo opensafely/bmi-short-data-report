@@ -101,3 +101,17 @@ actions:
     outputs:
       moderately_sensitive: 
         tables: output/validation/tables/backend_computed_bmi/*.csv
+
+  execute_validation_analyses_high_computed_bmi:
+    run: python:latest python analysis/validation_script_high_bmi.py "computed_bmi"
+    needs: [join_cohorts]
+    outputs:
+      moderately_sensitive: 
+        tables: output/validation/tables/high_computed_bmi/*.csv
+        
+  execute_validation_analyses_high_backend_computed_bmi:
+    run: python:latest python analysis/validation_script_high_bmi.py "backend_computed_bmi"
+    needs: [join_cohorts]
+    outputs:
+      moderately_sensitive: 
+        tables: output/validation/tables/high_backend_computed_bmi/*.csv
