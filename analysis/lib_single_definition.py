@@ -101,7 +101,7 @@ def distribution(df_input, definition,
         df_group_dist.to_csv(f'output/validation/tables/{definition}/{definition}_{group}_distribution.csv')
 
 
-def cdf(df_input, definition):
+def cdf(df_input, definition, out_folder):
     # Compute frequency
     df_stats = df_input[[definition]]
     df_freq = (
@@ -115,7 +115,7 @@ def cdf(df_input, definition):
     # Compute CDF
     df_freq["cdf"] = df_freq["pdf"].cumsum()
     df_freq = df_freq.reset_index()
-    df_freq.to_csv(f'output/validation/tables/{definition}/{definition}_cdf_data.csv')
+    df_freq.to_csv(f'output/validation/tables/{out_folder}/{definition}_cdf_data.csv')
 
 
 def less_than_min(df_input, definition, min_value, 
@@ -211,3 +211,8 @@ def recent_to_now(df_input, definition):
     # Compute difference between dates (in days)
     df_temp2[definition+'_date_diff'] = (curr_time-df_temp2[definition+'_date']).dt.days
     cdf(df_temp2, definition+'_date_diff')
+
+
+def count_table(df_input, definition, out_folder):
+    ct_table = pd.DataFrame(df_input[[definition]].count(), columns=["counts"])
+    ct_table.to_csv(f"output/validation/tables/{out_folder}/ct_{definition}.csv")
