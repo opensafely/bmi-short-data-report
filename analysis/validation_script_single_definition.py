@@ -38,7 +38,7 @@ def main():
     greater_than_max(
         df_input, definition, min_value, demographic_covariates, clinical_covariates
     )
-    cdf(df_input, definition)
+    cdf(df_input, definition, definition)
     distribution(
         df_input, definition, demographic_covariates, clinical_covariates
     )
@@ -51,8 +51,11 @@ def main():
     recent_to_now(df_input, definition)
     if (definition == "backend_computed_bmi") | (definition == "computed_bmi"):
         # Report number of records and means over time of high computed BMI 
-        df_high_computed = df_input.loc[df_input[definition] > max_range].rename(
-            columns = {definition:"high_"+definition}
+        df_high_computed = df_input.loc[df_input[definition] > max_value].rename(
+            columns = {
+                definition:"high_"+definition, 
+                definition+"_date":"high_"+definition+"_date",
+                }
         )
         # Check whether output paths exist or not, create if missing
         filepath = f'output/validation/tables/high_{definition}'

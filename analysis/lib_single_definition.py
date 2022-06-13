@@ -210,7 +210,7 @@ def recent_to_now(df_input, definition):
     df_temp2 = df_temp.drop_duplicates(subset='patient_id')
     # Compute difference between dates (in days)
     df_temp2[definition+'_date_diff'] = (curr_time-df_temp2[definition+'_date']).dt.days
-    cdf(df_temp2, definition+'_date_diff')
+    cdf(df_temp2, definition+'_date_diff', definition)
 
 
 def count_table(df_input, definition, out_folder):
