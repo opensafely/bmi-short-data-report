@@ -202,3 +202,12 @@ def means_over_time(df_input, definition,
         redact(df_group, 'count')
         df_group.loc[df_group['count'] == '-', 'mean'] = '-'
         df_group.to_csv(f'output/validation/tables/{definition}/{definition}_{group}_means_over_time.csv')
+
+
+def recent_to_now(df_input, definition):
+    curr_time = pd.to_datetime("now")
+    df_temp = df_input[['patient_id', definition+'_date']].sort_values(by=['patient_id', definition+'_date'], ascending=False)
+    df_temp2 = df_temp.drop_duplicates(subset='patient_id')
+    # Compute difference between dates (in days)
+    df_temp2[definition+'_date_diff'] = (curr_time-df_temp2[definition+'_date']).dt.days
+    cdf(df_temp2, definition+'_date_diff')

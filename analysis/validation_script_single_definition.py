@@ -48,6 +48,7 @@ def main():
     means_over_time(
         df_input, definition, demographic_covariates, clinical_covariates
     )
+    recent_to_now(df_input, definition)
 
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
