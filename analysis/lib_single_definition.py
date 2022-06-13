@@ -9,11 +9,12 @@ def redact(df_in, var):
 
 
 def import_clean(input_path, definition, time_delta,
-                 demographic_covariates, clinical_covariates):
+                 demographic_covariates, clinical_covariates,
+                 other_variables = []):
     df_input = pd.read_feather(
         input_path,
         columns = ['patient_id'] + [definition] + [definition+'_date'] + 
-                   demographic_covariates + clinical_covariates
+                   demographic_covariates + clinical_covariates + other_variables
     )
     # Create order for categorical variables
     for group in demographic_covariates + clinical_covariates:
@@ -101,7 +102,7 @@ def distribution(df_input, definition,
         df_group_dist.to_csv(f'output/validation/tables/{definition}/{definition}_{group}_distribution.csv')
 
 
-def cdf(df_input, definition):
+def cdf(df_input, definition, out_folder):
     # Compute frequency
     df_stats = df_input[[definition]]
     df_freq = (
@@ -115,7 +116,7 @@ def cdf(df_input, definition):
     # Compute CDF
     df_freq["cdf"] = df_freq["pdf"].cumsum()
     df_freq = df_freq.reset_index()
-    df_freq.to_csv(f'output/validation/tables/{definition}/{definition}_cdf_data.csv')
+    df_freq.to_csv(f'output/validation/tables/{out_folder}/{definition}_cdf_data.csv')
 
 
 def less_than_min(df_input, definition, min_value, 
@@ -202,3 +203,17 @@ def means_over_time(df_input, definition,
         redact(df_group, 'count')
         df_group.loc[df_group['count'] == '-', 'mean'] = '-'
         df_group.to_csv(f'output/validation/tables/{definition}/{definition}_{group}_means_over_time.csv')
+
+
+def recent_to_now(df_input, definition):
+    curr_time = pd.to_datetime("now")
+    df_temp = df_input[['patient_id', definition+'_date']].sort_values(by=['patient_id', definition+'_date'], ascending=False)
+    df_temp2 = df_temp.drop_duplicates(subset='patient_id')
+    # Compute difference between dates (in days)
+    df_temp2[definition+'_date_diff'] = (curr_time-df_temp2[definition+'_date']).dt.days
+    cdf(df_temp2, definition+'_date_diff', definition)
+
+
+def count_table(df_input, definition, out_folder):
+    ct_table = pd.DataFrame(df_input[[definition]].count(), columns=["counts"])
+    ct_table.to_csv(f"output/validation/tables/{out_folder}/ct_{definition}.csv")
