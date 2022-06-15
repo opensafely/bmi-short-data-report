@@ -17,7 +17,7 @@ max_value = 200
 
 # Covariates
 demographic_covariates = ['age_band', 'sex', 'ethnicity', 'region', 'imd']
-clinical_covariates = ['dementia', 'diabetes', 'hypertension', 'learning_disability']
+clinical_covariates = ['dementia', 'diabetes', 'learning_disability']
 
 ########################## SPECIFY ANALYSES TO RUN HERE ##############################
 
