@@ -74,6 +74,16 @@ actions:
       highly_sensitive:
         cohort: output/joined/input_processed*.feather
 
+  preprocess_age_dates:
+    run: python:latest python analysis/preprocess_age_dates.py --output-format feather
+    needs: [join_cohorts]
+    outputs:
+      highly_sensitive:
+        cohort1: output/joined/input_processed_backend_computed_bmi.feather
+        cohort2: output/joined/input_processed_computed_bmi.feather
+        cohort3: output/joined/input_processed_derived_bmi.feather
+        cohort4: output/joined/input_processed_recorded_bmi.feather
+
   execute_validation_analyses_derived_bmi:
     run: python:latest python analysis/validation_script_single_definition.py "derived_bmi"
     needs: [join_cohorts]
