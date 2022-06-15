@@ -249,59 +249,60 @@ clinical_variables = dict(
     # Clinical conditions
     # -------------------
     # Chronic cardiac disease
-    chronic_cardiac_disease=patients.with_these_clinical_events(
-        chronic_cardiac_dis_codes,
-        on_or_before="index_date - 1 day",
-        returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
-    # Chronic kidney disease
-    chronic_kidney_disease=patients.with_these_clinical_events(
-        chronic_kidney_dis_codes,
-        on_or_before="index_date - 1 day",
-        returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
-    # Chronic liver disease
-    chronic_liver_disease=patients.with_these_clinical_events(
-        chronic_liver_dis_codes,
-        on_or_before="index_date - 1 day",
-        returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
-    # Chronic respiratory disease
-    chronic_respiratory_disease=patients.with_these_clinical_events(
-        chronic_respiratory_dis_codes,
-        on_or_before="index_date - 1 day",
-        returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
-    # Cancer (Haemotological)
-    cancer_haem=patients.with_these_clinical_events(
-        cancer_haem_codes,
-        on_or_before="index_date - 1 day",
-        returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
-    # Cancer (Lung)
-    cancer_lung=patients.with_these_clinical_events(
-        cancer_lung_codes,
-        on_or_before="index_date - 1 day",
-        returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
-    # Cancer (Other)
-    cancer_other=patients.with_these_clinical_events(
-        cancer_other_codes,
-        on_or_before="index_date - 1 day",
-        returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
+    # chronic_cardiac_disease=patients.with_these_clinical_events(
+    #     chronic_cardiac_dis_codes,
+    #     on_or_before="index_date - 1 day",
+    #     returning="binary_flag",
+    #     return_expectations={"incidence": 0.01, },
+    # ),
+    # # Chronic kidney disease
+    # chronic_kidney_disease=patients.with_these_clinical_events(
+    #     chronic_kidney_dis_codes,
+    #     on_or_before="index_date - 1 day",
+    #     returning="binary_flag",
+    #     return_expectations={"incidence": 0.01, },
+    # ),
+    # # Chronic liver disease
+    # chronic_liver_disease=patients.with_these_clinical_events(
+    #     chronic_liver_dis_codes,
+    #     on_or_before="index_date - 1 day",
+    #     returning="binary_flag",
+    #     return_expectations={"incidence": 0.01, },
+    # ),
+    # # Chronic respiratory disease
+    # chronic_respiratory_disease=patients.with_these_clinical_events(
+    #     chronic_respiratory_dis_codes,
+    #     on_or_before="index_date - 1 day",
+    #     returning="binary_flag",
+    #     return_expectations={"incidence": 0.01, },
+    # ),
+    # # Cancer (Haemotological)
+    # cancer_haem=patients.with_these_clinical_events(
+    #     cancer_haem_codes,
+    #     on_or_before="index_date - 1 day",
+    #     returning="binary_flag",
+    #     return_expectations={"incidence": 0.01, },
+    # ),
+    # # Cancer (Lung)
+    # cancer_lung=patients.with_these_clinical_events(
+    #     cancer_lung_codes,
+    #     on_or_before="index_date - 1 day",
+    #     returning="binary_flag",
+    #     return_expectations={"incidence": 0.01, },
+    # ),
+    # # Cancer (Other)
+    # cancer_other=patients.with_these_clinical_events(
+    #     cancer_other_codes,
+    #     on_or_before="index_date - 1 day",
+    #     returning="binary_flag",
+    #     return_expectations={"incidence": 0.01, },
+    # ),
     # Dementia
     dementia=patients.with_these_clinical_events(
         dementia_codes,
         on_or_before="index_date - 1 day",
         returning="binary_flag",
+        return_first_date_in_period=True,
         return_expectations={"incidence": 0.01, },
     ),
     # Diabetes
@@ -309,70 +310,77 @@ clinical_variables = dict(
         diabetes_codes,
         on_or_before="index_date - 1 day",
         returning="binary_flag",
+        return_first_date_in_period=True,
         return_expectations={"incidence": 0.01, },
     ),
-    # Housebound
-    housebound=patients.with_these_clinical_events(
-        housebound_codes,
-        on_or_before="index_date - 1 day",
-        returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
-    # Hypertension
-    hypertension=patients.with_these_clinical_events(
-        hypertension_codes,
-        between=["index_date - 2 years", "index_date - 1 day"],
-        returning="binary_flag",
-        return_expectations={"incidence": 0.01, },
-    ),
+    # # Housebound
+    # housebound=patients.with_these_clinical_events(
+    #     housebound_codes,
+    #     on_or_before="index_date - 1 day",
+    #     returning="binary_flag",
+    #     return_expectations={"incidence": 0.01, },
+    # ),
+    # # Hypertension
+    # hypertension=patients.with_these_clinical_events(
+    #     hypertension_codes,
+    #     between=["index_date - 2 years", "index_date - 1 day"],
+    #     returning="binary_flag",
+    #     return_expectations={"incidence": 0.01, },
+    # ),
     # Learning disability
     learning_disability=patients.with_these_clinical_events(
         wider_ld_codes,
         on_or_before="index_date - 1 day",
         returning="binary_flag",
+        return_first_date_in_period=True,
         return_expectations={"incidence": 0.01, },
     ),
 )
 
 demographic_variables = dict(
-    # Age
-    age=patients.age_as_of(
-        "index_date",
+    # Birthdate
+    date_of_birth=patients.date_of_birth(
         return_expectations={
-            "rate": "universal",
-            "int": {"distribution": "population_ages"},
+            "date": {"earliest": "index_date - 110 years"},
         },
     ),
-    # Age band
-    age_band=patients.categorised_as(
-        {
-            "missing": "DEFAULT",
-            "0-19": """ age >= 0 AND age < 20""",
-            "20-29": """ age >=  20 AND age < 30""",
-            "30-39": """ age >=  30 AND age < 40""",
-            "40-49": """ age >=  40 AND age < 50""",
-            "50-59": """ age >=  50 AND age < 60""",
-            "60-69": """ age >=  60 AND age < 70""",
-            "70-79": """ age >=  70 AND age < 80""",
-            "80+": """ age >=  80 AND age < 120""",
-        },
-        return_expectations={
-            "rate": "universal",
-            "category": {
-                "ratios": {
-                    "0-19": 0.125,
-                    "20-29": 0.125,
-                    "30-39": 0.125,
-                    "40-49": 0.125,
-                    "50-59": 0.125,
-                    "60-69": 0.125,
-                    "70-79": 0.125,
-                    "80+": 0.125,
-                }
-            },
-        },
-
-    ),
+    # # Age
+    # age=patients.age_as_of(
+    #     "index_date",
+    #     return_expectations={
+    #         "rate": "universal",
+    #         "int": {"distribution": "population_ages"},
+    #     },
+    # ),
+    # # Age band
+    # age_band=patients.categorised_as(
+    #     {
+    #         "missing": "DEFAULT",
+    #         "0-19": """ age >= 0 AND age < 20""",
+    #         "20-29": """ age >=  20 AND age < 30""",
+    #         "30-39": """ age >=  30 AND age < 40""",
+    #         "40-49": """ age >=  40 AND age < 50""",
+    #         "50-59": """ age >=  50 AND age < 60""",
+    #         "60-69": """ age >=  60 AND age < 70""",
+    #         "70-79": """ age >=  70 AND age < 80""",
+    #         "80+": """ age >=  80 AND age < 120""",
+    #     },
+    #     return_expectations={
+    #         "rate": "universal",
+    #         "category": {
+    #             "ratios": {
+    #                 "0-19": 0.125,
+    #                 "20-29": 0.125,
+    #                 "30-39": 0.125,
+    #                 "40-49": 0.125,
+    #                 "50-59": 0.125,
+    #                 "60-69": 0.125,
+    #                 "70-79": 0.125,
+    #                 "80+": 0.125,
+    #             }
+    #         },
+    #     },
+    # ),
     # Sex
     sex=patients.sex(
         return_expectations={
