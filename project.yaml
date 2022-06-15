@@ -86,42 +86,42 @@ actions:
 
   execute_validation_analyses_derived_bmi:
     run: python:latest python analysis/validation_script_single_definition.py "derived_bmi"
-    needs: [join_cohorts]
+    needs: [preprocess_age_dates]
     outputs:
       moderately_sensitive: 
         tables: output/validation/tables/derived_bmi/*.csv
 
   execute_validation_analyses_recorded_bmi:
     run: python:latest python analysis/validation_script_single_definition.py "recorded_bmi"
-    needs: [join_cohorts]
+    needs: [preprocess_age_dates]
     outputs:
       moderately_sensitive: 
         tables: output/validation/tables/recorded_bmi/*.csv
 
   execute_validation_analyses_computed_bmi:
     run: python:latest python analysis/validation_script_single_definition.py "computed_bmi"
-    needs: [join_cohorts]
+    needs: [preprocess_age_dates]
     outputs:
       moderately_sensitive: 
         tables: output/validation/tables/computed_bmi/*.csv
 
   execute_validation_analyses_backend_computed_bmi:
     run: python:latest python analysis/validation_script_single_definition.py "backend_computed_bmi"
-    needs: [join_cohorts]
+    needs: [preprocess_age_dates]
     outputs:
       moderately_sensitive: 
         tables: output/validation/tables/backend_computed_bmi/*.csv
 
   execute_validation_analyses_high_computed_bmi:
     run: python:latest python analysis/validation_script_high_bmi.py "computed_bmi"
-    needs: [join_cohorts]
+    needs: [preprocess_age_dates]
     outputs:
       moderately_sensitive: 
         tables: output/validation/tables/high_computed_bmi/*.csv
         
   execute_validation_analyses_high_backend_computed_bmi:
     run: python:latest python analysis/validation_script_high_bmi.py "backend_computed_bmi"
-    needs: [join_cohorts]
+    needs: [preprocess_age_dates]
     outputs:
       moderately_sensitive: 
         tables: output/validation/tables/high_backend_computed_bmi/*.csv
