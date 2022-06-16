@@ -302,7 +302,8 @@ clinical_variables = dict(
         dementia_codes,
         on_or_before="index_date - 1 day",
         returning="binary_flag",
-        return_first_date_in_period=True,
+        include_date_of_match=True,
+        find_first_match_in_period=True,
         return_expectations={"incidence": 0.01, },
     ),
     # Diabetes
@@ -310,7 +311,8 @@ clinical_variables = dict(
         diabetes_codes,
         on_or_before="index_date - 1 day",
         returning="binary_flag",
-        return_first_date_in_period=True,
+        include_date_of_match=True,
+        find_first_match_in_period=True,
         return_expectations={"incidence": 0.01, },
     ),
     # # Housebound
@@ -332,7 +334,8 @@ clinical_variables = dict(
         wider_ld_codes,
         on_or_before="index_date - 1 day",
         returning="binary_flag",
-        return_first_date_in_period=True,
+        include_date_of_match=True,
+        find_first_match_in_period=True,
         return_expectations={"incidence": 0.01, },
     ),
 )
