@@ -22,6 +22,6 @@ df_output = pd.wide_to_long(
     [f'{bmi}', f'{bmi}_date',], 
     i='patient_id', 
     j="number"
-)
+).reset_index()
 
 df_output.to_feather(f'output/data/input_processed_{bmi}.feather')
