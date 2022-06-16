@@ -16,6 +16,8 @@ def import_clean(input_path, definition, time_delta,
         columns = ['patient_id'] + [definition] + [definition+'_date'] + 
                    demographic_covariates + clinical_covariates + other_variables
     )
+    # Drop null values
+    df_input = df_input.loc[df_input[definition] != 0].reset_index(drop=True)
     # Create order for categorical variables
     for group in demographic_covariates + clinical_covariates:
         if df_input[group].dtype.name == 'category':
