@@ -24,7 +24,4 @@ df_output = pd.wide_to_long(
     j="number"
 )
 
-# Delete if value is null
-df_output = df_output.loc[df_output[f'{bmi}'] != 0].reset_index()
-
 df_output.to_feather(f'output/data/input_processed_{bmi}.feather')
