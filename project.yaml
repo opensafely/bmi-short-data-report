@@ -125,3 +125,10 @@ actions:
     outputs:
       moderately_sensitive: 
         tables: output/validation/tables/high_backend_computed_bmi/*.csv
+
+  execute_validation_analyses_all_definitions:
+    run: python:latest python analysis/validation_script_all_definitions.py
+    needs: [preprocess_age_dates]
+    outputs:
+      moderately_sensitive: 
+        tables: output/validation/tables/comparison/*.csv
