@@ -164,7 +164,7 @@ def greater_than_max(df_input, definition, max_value,
         )
         df_group.loc[df_group['count'] > 5, 'count'] = 5 * round(df_group['count']/5)
         df_group.loc[(df_group['count'].isna()) | (df_group['count'] < 6), ['count', 'mean']] = ['-','-']
-        df_out.to_csv(f'output/validation/tables/{definition}/{definition}_{group}_greater_than_max.csv')
+        df_group.to_csv(f'output/validation/tables/{definition}/{definition}_{group}_greater_than_max.csv')
 
 
 def records_over_time(df_input, definition, 
