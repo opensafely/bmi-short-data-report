@@ -52,7 +52,8 @@ def import_clean(filepath, definitions, demographic_covariates,
             columns={f'{d}':'bmi', f'{d}_date':'bmi_date'}
         )
         li_dfs.append(df_input)
-        df_bmi = pd.concat(li_dfs)
+    df_bmi = pd.concat(li_dfs)
+    print('Concatenated dataframes')
     del li_dfs
 
     # Drop unnecessary columns
@@ -61,6 +62,7 @@ def import_clean(filepath, definitions, demographic_covariates,
         if col.startswith('height') | col.startswith('weight'):
             li_drop_cols.append(col)
     df_bmi = df_bmi.drop(columns=li_drop_cols)
+    print('Dropped unnecessary columns')
     del li_drop_cols
 
     # Create order for categorical variables
@@ -68,7 +70,10 @@ def import_clean(filepath, definitions, demographic_covariates,
         if df_bmi[group].dtype.name == 'category':
             li_order = sorted(df_bmi[group].dropna().unique().tolist())
             df_bmi[group] = pd.Categorical(df_bmi[group], categories=li_order)
+            print(f'Ordered {group} variables')
 
+    print("Successfully cleaned import variables")
+    print(df_bmi.memory_usage())
     return df_bmi
 
 def all_counts(df_bmi, filepath):
@@ -79,6 +84,7 @@ def all_counts(df_bmi, filepath):
     df_bmi = df_bmi.sort_values(by='patient_id')
     df_all = df_bmi.drop_duplicates(subset='patient_id')
     pop_ct = df_all['patient_id'].count()
+    print('Counted population')
     del df_all
 
     df_filled = df_bmi.drop_duplicates(
@@ -88,6 +94,7 @@ def all_counts(df_bmi, filepath):
         df_filled.groupby('patient_id')['filled'].sum()
     ).reset_index()
     filled_ct = df_filled_sum.loc[df_filled_sum['filled'] == 3]['patient_id'].count()
+    print('Counted filled')
     del df_filled
     del df_filled_sum
 
@@ -98,6 +105,7 @@ def all_counts(df_bmi, filepath):
         df_missing.groupby('patient_id')['missing'].sum()
     ).reset_index()
     missing_ct = df_missing_sum.loc[df_missing_sum['missing'] == 3]['patient_id'].count()
+    print('Counted missing')
     del df_missing
     del df_missing_sum
 
@@ -121,6 +129,7 @@ def count_by_group(df_bmi, filepath, demographic_covariates,
         df_all_ct = df_all[['patient_id',group]].groupby(
             group).count().rename(columns={'patient_id':'population'})
         df_all_ct.to_csv(f'{filepath}/total_counts_{group}.csv')
+        print(f"Counted population by {group}")
 
         # All filled
         df_filled = df_bmi.drop_duplicates(
@@ -134,6 +143,7 @@ def count_by_group(df_bmi, filepath, demographic_covariates,
                 group
             )['patient_id'].count()).rename(columns={'patient_id':'all_filled'})
         df_filled_ct.to_csv(f'{filepath}/filled_counts_{group}.csv')
+        print(f"Counted filled by {group}")
 
         # All missing
         df_missing = df_bmi.drop_duplicates(
@@ -147,6 +157,8 @@ def count_by_group(df_bmi, filepath, demographic_covariates,
                 group
             )['patient_id'].count()).rename(columns={'patient_id':'all_missing'})
         df_missing_ct.to_csv(f'{filepath}/missing_counts_{group}.csv')
+        print(f"Counted missing by {group}")
+
 
 def upset_crosstab(df_bmi, definitions):
     df_filled = df_bmi.drop_duplicates(
@@ -162,6 +174,7 @@ def upset_crosstab(df_bmi, definitions):
         df_filled_pivot.groupby(definitions[1:])[definitions[0]].value_counts()
     )
     df_crosstab = redact(df_crosstab)
+    print("Generated crosstab table")
     df_crosstab.to_csv(f'{filepath}/upset_crosstab.csv')
 
 ########################## SPECIFY ANALYSES TO RUN HERE ##############################
