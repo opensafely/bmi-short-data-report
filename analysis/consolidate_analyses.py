@@ -106,9 +106,12 @@ def format_out_of_range(definitions, specification):
             li_df.append(df_temp)
         df_combined = pd.concat(li_df).reset_index()
         df_combined = df_combined.rename(
-                columns={'count':f'count_{definition}', 'mean':f'mean_{definition}'}
+            columns={'count':f'count_{definition}', 'mean':f'mean_{definition}'}
         )
+        if (definition == 'computed_bmi') & (specification == "less_than_min"):
+            df_combined = df_combined.rename(columns={'population':'subcategory'})
         li_all_df.append(df_combined)
+        print(df_combined.columns)
     # Merge files
     df_out = reduce(lambda df1, df2: pd.merge(
         df1, df2, on=['category','subcategory']
@@ -137,7 +140,7 @@ def main():
 
     # Out-of-range analyses
     format_out_of_range(definitions, 'greater_than_max')
-    # format_out_of_range(definitions, 'less_than_min')
+    format_out_of_range(definitions, 'less_than_min')
 
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
