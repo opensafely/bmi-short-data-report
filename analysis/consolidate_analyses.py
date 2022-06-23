@@ -48,7 +48,7 @@ def format_counts(definitions, units):
         li_all_df.append(df_combined)
     # Merge files
     df_out = reduce(lambda df1, df2: pd.merge(
-        df1, df2, on=['category','subcategory']
+        df1, df2, on=['category','subcategory'], how='outer'
     ), li_all_df)
     df_out.to_csv(f"output/validation/formatted_tables/{units}.csv")
 
@@ -92,7 +92,9 @@ def format_out_of_range(definitions, specification):
                 )
                 df_temp = df_temp.T.reset_index()
                 df_temp.columns = df_temp.iloc[0]
-                df_temp = df_temp.iloc[1: , :]
+                df_temp = df_temp.iloc[1: , :].rename(
+                    columns={'population':'subcategory'}
+                )
                 df_temp['category'] = 'population'
             # Format by group
             else:
@@ -108,13 +110,10 @@ def format_out_of_range(definitions, specification):
         df_combined = df_combined.rename(
             columns={'count':f'count_{definition}', 'mean':f'mean_{definition}'}
         )
-        if (definition == 'computed_bmi') & (specification == "less_than_min"):
-            df_combined = df_combined.rename(columns={'population':'subcategory'})
         li_all_df.append(df_combined)
-        print(df_combined.columns)
     # Merge files
     df_out = reduce(lambda df1, df2: pd.merge(
-        df1, df2, on=['category','subcategory']
+        df1, df2, on=['category','subcategory'], how='outer'
     ), li_all_df)
     df_out.to_csv(f"output/validation/formatted_tables/{specification}.csv")
 
