@@ -70,22 +70,27 @@ def format_over_time(bmi, units):
     for f in files:
         df_temp = pd.read_csv(f, index_col = 0)
         df_temp['category'] = df_temp.columns[1]
-        # Format all population
-        if (df_temp['category'][1] == 'count') | (df_temp['category'][1] == f'{bmi}'):
-            df_temp['category'] = 'population'
-            df_temp['subcategory'] = 'all'
-        # Format by group
+        if len(df_temp) > 0:
+            # Format all population
+            if (df_temp['category'][1] == 'count') | (df_temp['category'][1] == f'{bmi}'):
+                df_temp['category'] = 'population'
+                df_temp['subcategory'] = 'all'
+            # Format by group
+            else:
+                df_temp = df_temp.rename(
+                    columns={df_temp.columns[1]:'subcategory'}
+                )
+            # Only keep 2015 on
+            df_temp = df_temp.loc[df_temp.date > '2014-12-01']
+            df_temp = df_temp.set_index(['category','subcategory','date'])
+            li_df.append(df_temp)
         else:
-            df_temp = df_temp.rename(
-                columns={df_temp.columns[1]:'subcategory'}
-            )
-        # Only keep 2015 on
-        df_temp = df_temp.loc[df_temp.date > '2014-12-01']
-        df_temp = df_temp.set_index(['category','subcategory','date'])
-        li_df.append(df_temp)
-
-    df_out = pd.concat(li_df)
-    df_out.to_csv(f"output/validation/formatted_tables/{bmi}_{units}_over_time.csv")
+            print(f'{f} contains no observations.')
+    if len(li_df) > 0:
+        df_out = pd.concat(li_df)
+        df_out.to_csv(f"output/validation/formatted_tables/{bmi}_{units}_over_time.csv")
+    else:
+        print(f'No objects to concatenate for {bmi}, {units} over time.')
 
 
 def format_out_of_range(definitions, specification):
@@ -151,6 +156,12 @@ def main():
     # Out-of-range analyses
     format_out_of_range(definitions, 'greater_than_max')
     format_out_of_range(definitions, 'less_than_min')
+
+    # High BMI analyses
+    format_over_time('high_backend_computed_bmi', 'means')
+    format_over_time('high_backend_computed_bmi', 'records')
+    format_over_time('high_computed_bmi', 'means')
+    format_over_time('high_computed_bmi', 'records')
 
 ########################## DO NOT EDIT – RUNS SCRIPT ##############################
 
