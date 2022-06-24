@@ -113,6 +113,10 @@ def cdf(df_input, definition, out_folder):
         .pipe(pd.DataFrame)
         .rename(columns={definition: "frequency"})
     )
+    # Round for disclosure control
+    df_freq['frequency'] = np.ceil(df_freq['frequency']/5)*(5-np.floor(5/2))
+    # Drop 0s
+    df_freq = df_freq.loc[df_freq['frequency'] > 0]
     # Compute PDF
     df_freq["pdf"] = df_freq["frequency"] / sum(df_freq["frequency"])
     # Compute CDF

@@ -139,10 +139,3 @@ actions:
     outputs:
       moderately_sensitive: 
         tables: output/validation/formatted_tables/*.csv
-
-  round_cdf:
-    run: python:latest python analysis/round_cdf.py
-    needs: [execute_validation_analyses_derived_bmi, execute_validation_analyses_recorded_bmi, execute_validation_analyses_backend_computed_bmi, execute_validation_analyses_computed_bmi]
-    outputs:
-      moderately_sensitive: 
-        tables: output/validation/formatted_tables/*_cdf_data.csv
