@@ -24,6 +24,7 @@ def format_distribution(bmi):
         if df_temp.columns[0] == 'Unnamed: 0':
             df_temp['category'] = 'population'
             df_temp['subcategory'] = 'all'
+            df_temp = df_temp.drop(columns=['Unnamed: 0'])
         else:
             df_temp = df_temp.rename(columns={df_temp.columns[0]:'subcategory'})
         df_temp = df_temp.set_index(['category','subcategory'])
