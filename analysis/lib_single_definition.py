@@ -114,13 +114,9 @@ def cdf(df_input, definition, out_folder):
         .rename(columns={definition: "frequency"})
     )
     # Round for disclosure control
-    df_freq['frequency'] = np.ceil(df_freq['frequency']/5)*(5-np.floor(5/2))
-    # Drop 0s
-    df_freq = df_freq.loc[df_freq['frequency'] > 0]
-    # Compute PDF
-    df_freq["pdf"] = df_freq["frequency"] / sum(df_freq["frequency"])
-    # Compute CDF
-    df_freq["cdf"] = df_freq["pdf"].cumsum()
+    df_freq['cumsum_middefer'] = np.ceil(df_freq['frequency'].cumsum()/5)*5 - np.floor(5/2)
+    df_freq['cdf'] = df_freq['cumsum_middefer']/np.max(df_freq['cumsum_middefer'])
+    df_freq = df_freq.drop(columns='frequency')
     df_freq = df_freq.reset_index()
     df_freq.to_csv(f'output/validation/tables/{out_folder}/{definition}_cdf_data.csv')
 
