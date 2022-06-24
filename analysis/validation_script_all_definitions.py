@@ -44,6 +44,7 @@ def import_clean(filepath, definitions, demographic_covariates,
     # Import and concatenate
     li_dfs = []
     for d in definitions:
+        print(f'Importing {d} file...')
         df_input = pd.read_feather(
             f'output/joined/input_processed_{d}.feather'
         ).drop(columns=['number'])
@@ -51,6 +52,7 @@ def import_clean(filepath, definitions, demographic_covariates,
         df_input = df_input.rename(
             columns={f'{d}':'bmi', f'{d}_date':'bmi_date'}
         )
+        print(f'Imported {d} file')
         li_dfs.append(df_input)
     df_bmi = pd.concat(li_dfs)
     print('Concatenated dataframes')
