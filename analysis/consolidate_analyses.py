@@ -45,13 +45,14 @@ def format_counts(definitions, units):
         for f in files:
             df_temp = pd.read_csv(f)
             df_temp['category'] = df_temp.columns[0]
-            if df_temp.columns[0] == f'{definition}':
+            if df_temp['category'][0] == 'Unnamed: 0':
                 df_temp['category'] = 'population'
                 df_temp['subcategory'] = 'all'
+                df_temp = df_temp.drop(columns=['Unnamed: 0'])
             else:
                 df_temp = df_temp.rename(columns={df_temp.columns[0]:'subcategory'})
             li_df.append(df_temp)
-        df_combined = pd.concat(li_df).reset_index()
+        df_combined = pd.concat(li_df)
         df_combined = df_combined.rename(
                 columns={col:f'{definition}_{col}'}
         )
@@ -59,7 +60,7 @@ def format_counts(definitions, units):
     # Merge files
     df_out = reduce(lambda df1, df2: pd.merge(
         df1, df2, on=['category','subcategory'], how='outer'
-    ), li_all_df)
+    ), li_all_df).set_index(['category','subcategory'])
     df_out.to_csv(f"output/validation/formatted_tables/{units}.csv")
 
 
@@ -70,7 +71,7 @@ def format_over_time(bmi, units):
         df_temp = pd.read_csv(f, index_col = 0)
         df_temp['category'] = df_temp.columns[1]
         # Format all population
-        if df_temp['category'][0] == 'date':
+        if (df_temp['category'][1] == 'count') | (df_temp['category'][1] == f'{bmi}'):
             df_temp['category'] = 'population'
             df_temp['subcategory'] = 'all'
         # Format by group
