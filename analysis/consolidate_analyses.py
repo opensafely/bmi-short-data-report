@@ -21,7 +21,12 @@ def format_distribution(bmi):
     for f in files:
         df_temp = pd.read_csv(f)
         df_temp['category'] = df_temp.columns[0]
-        df_temp = df_temp.set_index(['category',df_temp.iloc[:,0]]).drop(columns=[df_temp.columns[0]])
+        if df_temp.columns[0] == 'Unnamed: 0':
+            df_temp['category'] = 'population'
+            df_temp['subcategory'] = 'all'
+        else:
+            df_temp = df_temp.rename(columns={df_temp.columns[0]:'subcategory'})
+        df_temp = df_temp.set_index(['category','subcategory'])
         li_df.append(df_temp)
     df_out = pd.concat(li_df)
     df_out.to_csv(f"output/validation/formatted_tables/{bmi}_distribution.csv")
@@ -31,7 +36,7 @@ def format_counts(definitions, units):
     if units == "patient_counts":
         col = "num_patients"
     else:
-        col = "measurement_counts"
+        col = "num_measurements"
     li_all_df = []
     for definition in definitions:
         files = glob(f"output/validation/tables/{definition}/*_{units}.csv") 
@@ -39,7 +44,11 @@ def format_counts(definitions, units):
         for f in files:
             df_temp = pd.read_csv(f)
             df_temp['category'] = df_temp.columns[0]
-            df_temp = df_temp.rename(columns={df_temp.columns[0]:'subcategory'})
+            if df_temp.columns[0] == f'{definition}':
+                df_temp['category'] = 'population'
+                df_temp['subcategory'] = 'all'
+            else:
+                df_temp = df_temp.rename(columns={df_temp.columns[0]:'subcategory'})
             li_df.append(df_temp)
         df_combined = pd.concat(li_df).reset_index()
         df_combined = df_combined.rename(
@@ -60,7 +69,7 @@ def format_over_time(bmi, units):
         df_temp = pd.read_csv(f, index_col = 0)
         df_temp['category'] = df_temp.columns[1]
         # Format all population
-        if df_temp['category'][0] == 'count':
+        if df_temp['category'][0] == 'date':
             df_temp['category'] = 'population'
             df_temp['subcategory'] = 'all'
         # Format by group
