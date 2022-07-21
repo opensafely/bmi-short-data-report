@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 for bmi in ['backend_computed_bmi','computed_bmi','derived_bmi','recorded_bmi']:
     df_bmi = pd.read_feather(f'output/joined/input_processed_{bmi}.feather')
@@ -18,8 +19,9 @@ for bmi in ['backend_computed_bmi','computed_bmi','derived_bmi','recorded_bmi']:
         (df_bmi['date_of_birth'].dt.month)
     )
 
-    # Keep if age >= 18
-    df_bmi = df_bmi.loc[df_bmi['age'] >= 18].reset_index(drop=True)
+    # Null out BMI if age < 18
+    df_bmi.loc[df_bmi['age'] < 18, f'{bmi}'] = 0
+    df_bmi.loc[df_bmi['age'] < 18, f'{bmi}_date'] = np.nan
 
     # Create age_band
     df_bmi['age_band'] = 'missing'
