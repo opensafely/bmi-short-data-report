@@ -19,7 +19,7 @@ for bmi in ['backend_computed_bmi','computed_bmi','derived_bmi','recorded_bmi']:
     )
 
     # Keep if age >= 18
-    df_bmi = df_bmi.loc[df_bmi['age'] >= 18]
+    df_bmi = df_bmi.loc[df_bmi['age'] >= 18].reset_index(drop=True)
 
     # Create age_band
     df_bmi['age_band'] = 'missing'
