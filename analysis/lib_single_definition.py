@@ -106,7 +106,7 @@ def distribution(df_input, definition,
 
 def cdf(df_input, definition, out_folder):
     # Compute frequency
-    df_stats = df_input[[definition]].round(2)
+    df_stats = df_input[[definition]].round(0)
     df_freq = (
         df_stats.groupby(definition)[definition]
         .agg("count")
