@@ -117,6 +117,7 @@ def cdf(df_input, definition, out_folder):
     df_freq['cumsum_middefer'] = np.ceil(df_freq['frequency'].cumsum()/5)*5 - np.floor(5/2)
     df_freq['cdf'] = df_freq['cumsum_middefer']/np.max(df_freq['cumsum_middefer'])
     df_freq = df_freq.drop(columns='frequency')
+    df_freq = df_freq.drop_duplicates('cdf', keep='last')
     df_freq = df_freq.reset_index()
     df_freq.to_csv(f'output/validation/tables/{out_folder}/{definition}_cdf_data.csv')
 
