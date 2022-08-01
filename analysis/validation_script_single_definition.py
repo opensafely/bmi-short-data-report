@@ -36,7 +36,7 @@ def main():
         df_input, definition, min_value, demographic_covariates, clinical_covariates
     )
     greater_than_max(
-        df_input, definition, min_value, demographic_covariates, clinical_covariates
+        df_input, definition, max_value, demographic_covariates, clinical_covariates
     )
     cdf(df_input, definition, definition)
     distribution(
