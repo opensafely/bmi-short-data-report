@@ -95,7 +95,7 @@ actions:
     run: python:latest python analysis/validation_script_single_definition.py "recorded_bmi"
     needs: [preprocess_age_dates]
     outputs:
-      moderately_sensitive: 
+      moderately_sensitive:
         tables: output/validation/tables/recorded_bmi/*.csv
 
   execute_validation_analyses_computed_bmi:
@@ -139,3 +139,10 @@ actions:
     outputs:
       moderately_sensitive: 
         tables: output/validation/formatted_tables/*.csv
+
+  generate_report_bmi_segmented:
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_bmi_segmented.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [consolidate_analyses]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_bmi_segmented.html
