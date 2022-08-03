@@ -142,7 +142,7 @@ actions:
 
   generate_report_bmi_segmented:
     run: python:latest jupyter nbconvert /workspace/notebooks/report_bmi_segmented.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
-    needs: [consolidate_analyses]
+    needs: [consolidate_analyses, execute_validation_analyses_computed_bmi, execute_validation_analyses_backend_computed_bmi, execute_validation_analyses_high_computed_bmi, execute_validation_analyses_high_backend_computed_bmi, execute_validation_analyses_recorded_bmi, execute_validation_analyses_derived_bmi]
     outputs:
       moderately_sensitive:
         notebook: output/report_bmi_segmented.html
