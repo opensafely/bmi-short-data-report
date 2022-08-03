@@ -116,14 +116,19 @@ def display_ct(unit, ethnicity_dict, imd_dict):
         }
     ).set_index(["Category","Subcategory"])
     
+    df_ct = df_ct.replace("-",np.nan)
+        
     if unit == "measurement_counts":
         # Create percentages
         for col in df_ct.columns:
-            df_ct[col+'_pct'] = round((df_ct[col].div(df_ct[col][0]))*100,1)
+            df_ct[col+'_pct'] = round((df_ct[col].astype(float).div(float(df_ct[col][0])))*100,1)
             
+            # NAN control
+            df_ct[col] = df_ct[col].fillna(-1)
             # Combine count and percentage columns
-            df_ct[col] = df_ct[col].astype(int).astype(str) + " (" + df_ct[col+'_pct'].astype(str) + ")" 
+            df_ct[col] = df_ct[col].astype(float).astype(int).astype(str) + " (" + df_ct[col+'_pct'].astype(str) + ")" 
             df_ct = df_ct.drop(columns=[col+'_pct'])
+            df_ct.loc[df_ct[col] == "-1 (nan)", col] = "- (-)"
             
         # Rename column names
         df_ct = df_ct.rename(
@@ -307,6 +312,7 @@ def plot_over_time(unit):
 
             if unit == "records":
                 df_sub = df_sub.rename(columns={f"{definition}": f"{definition2}"})
+                df_sub.loc[df_sub[f"{definition2}"] == "-", f"{definition2}"] = np.nan
                 df_sub[f"{definition2}"] = df_sub[f"{definition2}"].astype(float)
                 ax = sns.lineplot(x="Date", y=f"{definition2}", data=df_sub)
                 ax.set_title(f"{definition2}")
@@ -384,9 +390,11 @@ def plot_over_time_by_group(unit, category, code_dict=""):
                 ax.set_title(f"{definition2}")
                 
             i += 1
-
-            l = plt.xticks(df_temp.loc[df_temp["subcategory"] == df_temp["subcategory"].iloc[0]]["Date"][0::6])
-            plt.xticks(rotation=60)
+            try:
+                l = plt.xticks(df_temp.loc[df_temp["subcategory"] == df_temp["subcategory"].iloc[0]]["Date"][0::6])
+                plt.xticks(rotation=60)
+            except:
+                print("Not enough x-axis labels")
 
     unit2 = unit.title()
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -668,7 +676,10 @@ def high_plot_over_time(unit):
 # In[ ]:
 
 
-high_plot_over_time("records")
+try:
+    high_plot_over_time("records")
+except:
+    print("Not enough data points to plot.")
 
 
 # #### CDF of Difference in Measurement Dates
