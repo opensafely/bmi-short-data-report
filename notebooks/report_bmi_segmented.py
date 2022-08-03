@@ -65,7 +65,7 @@ pd.options.mode.chained_assignment = None
 get_ipython().run_line_magic('matplotlib', 'inline')
 plt.rcParams["figure.figsize"] = [16, 12]
 
-path = "../output/release250722"
+path = "../output/validation/formatted_tables"
 
 ethnicity_dict = {
     "True": "White",
@@ -424,8 +424,8 @@ plot_over_time_by_group("records","learning_disability")
 # In[ ]:
 
 
-def display_oob(folder_path, unit):
-    df_ct = pd.read_csv(f"{folder_path}/{unit}.csv", index_col=0)
+def display_oob(unit):
+    df_ct = pd.read_csv(f"{path}/{unit}.csv", index_col=0)
     df_ct.loc[df_ct["category"] == "population", "sort"] = 1
     
     # Rename subcategories 
@@ -477,7 +477,7 @@ def display_oob(folder_path, unit):
 # In[ ]:
 
 
-display_oob(path,"less_than_min")
+display_oob("less_than_min")
 
 
 # #### Greater than Maximum (BMI > 200)
@@ -487,7 +487,7 @@ display_oob(path,"less_than_min")
 # In[ ]:
 
 
-display_oob("../output/release010822", "greater_than_max")
+display_oob("greater_than_max")
 
 
 # #### CDF of BMI Values
@@ -497,7 +497,7 @@ display_oob("../output/release010822", "greater_than_max")
 # In[ ]:
 
 
-path2 = "../output/release280722"
+path2 = "../output/validation/tables"
 
 i = 0
 N = 4
@@ -507,7 +507,8 @@ rows = int(math.ceil(N / cols))
 gs = gridspec.GridSpec(rows, cols)
 fig = plt.figure()
 
-for file in glob.glob(f"{path2}/*_bmi_cdf_data.csv"):
+for bmi in ["backend_computed_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]:
+    file = f"{path2}/{bmi}/{bmi}_cdf_data.csv"
     df_temp = pd.read_csv(file,index_col=0)
     definition = df_temp.columns[0]
     
@@ -540,7 +541,7 @@ plt.show()
 # In[ ]:
 
 
-path2 = "../output/release280722"
+path2 = "../output/validation/tables"
 
 i = 0
 N = 4
@@ -550,7 +551,7 @@ rows = int(math.ceil(N / cols))
 gs = gridspec.GridSpec(rows, cols)
 fig = plt.figure()
 
-for file in glob.glob(f"{path2}/*eight_cdf_data.csv"):
+for file in glob.glob(f"{path2}/high_backend_computed_bmi/*eight_backend_cdf_data.csv"):
     df_temp = pd.read_csv(file, index_col=0)
     definition = df_temp.columns[0]
     ax = fig.add_subplot(gs[i])
@@ -562,11 +563,7 @@ for file in glob.glob(f"{path2}/*eight_cdf_data.csv"):
     plt.ylim(bottom=0)
 
     # Rename labels 
-    if definition == "height":
-        definition2 = "Height (SNOMED)"
-    elif definition == "weight": 
-        definition2 = "Weight (SNOMED)"
-    elif definition == "height_backend":
+    if definition == "height_backend":
         definition2 = "Height (CTV3)"
     else:
         definition2 = "Weight (CTV3)"
@@ -575,15 +572,13 @@ for file in glob.glob(f"{path2}/*eight_cdf_data.csv"):
     i += 1
 
 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.suptitle(f"CDF of Heights and Weights for Computed BMI (SNOMED)", fontsize=14)
+plt.suptitle(f"CDF of Heights and Weights for Backend Computed BMI (SNOMED)", fontsize=14)
 plt.show()
 
 
 # In[ ]:
 
 
-path2 = "../output/release280722"
-
 i = 0
 N = 4
 cols = 2
@@ -592,7 +587,7 @@ rows = int(math.ceil(N / cols))
 gs = gridspec.GridSpec(rows, cols)
 fig = plt.figure()
 
-for file in glob.glob(f"{path2}/*eight_backend_cdf_data.csv"):
+for file in glob.glob(f"{path2}/high_computed_bmi/*eight_cdf_data.csv"):
     df_temp = pd.read_csv(file, index_col=0)
     definition = df_temp.columns[0]
     ax = fig.add_subplot(gs[i])
@@ -608,16 +603,12 @@ for file in glob.glob(f"{path2}/*eight_backend_cdf_data.csv"):
         definition2 = "Height (SNOMED)"
     elif definition == "weight": 
         definition2 = "Weight (SNOMED)"
-    elif definition == "height_backend":
-        definition2 = "Height (CTV3)"
-    else:
-        definition2 = "Weight (CTV3)"
 
     ax.set_title(f'{definition2}')
     i += 1
 
 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.suptitle(f"CDF of Heights and Weights for Backend Computed BMI (CTV3)", fontsize=14)
+plt.suptitle(f"CDF of Heights and Weights for Computed BMI (SNOMED)", fontsize=14)
 plt.show()
 
 
@@ -637,7 +628,7 @@ def high_plot_over_time(unit):
     gs = gridspec.GridSpec(rows, cols)
     fig = plt.figure()
 
-    for file in glob.glob(f"{path}/*_{unit}_over_time.csv"):
+    for file in glob.glob(f"{path2}/high_*/*_bmi_{unit}_over_time.csv"):
         if "high" in file:
             df_in = pd.read_csv(file)
             definition  = file.rsplit('/', 1)[-1].rsplit(f'_{unit}', 1)[0]
@@ -695,7 +686,8 @@ rows = int(math.ceil(N / cols))
 gs = gridspec.GridSpec(rows, cols)
 fig = plt.figure()
 
-for file in glob.glob(f"{path2}/*_date_diff_cdf_data.csv"):
+for bmi in ["backend_computed_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]:
+    file = f"{path2}/{bmi}/{bmi}_date_diff_cdf_data.csv"
     df_temp = pd.read_csv(file,index_col=0)
     definition = df_temp.columns[0]
     ax = fig.add_subplot(gs[i]) 
