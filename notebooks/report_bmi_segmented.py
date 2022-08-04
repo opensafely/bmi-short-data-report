@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # # Measuring BMI in OpenSAFELY-TPP
-# This report describes how BMI can be identified in the OpenSAFELY-TPP database, and the strengths and weaknesses of the methods. This is a living document that will be updated to reflect changes to the OpenSAFELY-TPP database and the patient records within.
+# This report describes how BMI can be identified in the OpenSAFELY-TPP database, and the strengths and weaknesses of the methods. BMI has been identified as a risk factor for clinical outcomes in patients with COVID-19 [1–3]. Electronic Health Records (EHR) hold significant potential for studying the association between BMI and COVID-19. This depends on the validity, completeness, and currency of BMI information that is available in or can be derived from EHR. Thus, this study aims to describe and compare methods for identifying BMI in EHR. This is a living document that will be updated to reflect changes to the OpenSAFELY-TPP database and the patient records within.
 # 
 # ## OpenSAFELY
 # OpenSAFELY is an analytics platform for conducting analyses on Electronic Health Records inside the secure environment where the records are held. This has multiple benefits: 
@@ -20,15 +20,15 @@
 # OpenSAFELY-TPP runs inside TPP’s data centre which contains the primary care records for all patients registered at practices using TPP’s SystmOne Clinical Information System. This data centre also imports external datasets from other sources, including A&E attendances and hospital admissions from NHS Digital’s Secondary Use Service, and death registrations from the ONS. More information on available data sources can be found within the [OpenSAFELY documentation](https://docs.opensafely.org/data-sources/intro/). 
 # 
 # ## Methods
-# We define four variable derivations: backend computed BMI, computed BMI, recorded BMI, and derived BMI. 
+# We define four variable derivations: backend computed BMI (CTV3), computed BMI (SNOMED), recorded BMI, and most_recent_bmi().
 # 
-# * Computed BMI refers to BMI calculated from height and weight measurements. Height and weight measurements are derived using two sets of codelists, so we compare the derivations created using each of these codelists: 
-#   * Backend computed BMI, which uses CTV3 height and weight codes (used in the OpenSAFELY-TPP backend) 
-#   * Computed BMI, which uses SNOMED height and weight codes.
+# * Computed BMI refers to BMI calculated from height and weight measurements. Previous height records are carried over to the future to compute BMI with the assumption that there is little variation in an individual’s height in adulthood. New BMI records are only computed when there is a new weight measurement, as there can be greater variation in weights. Height and weight measurements are derived using two sets of codelists, so we compare the derivations created using each of these codelists: 
+#   * Backend computed BMI, which uses CTV3 height ("XM01E", "229..") and weight ("X76C7", "22A..") codes (used in the OpenSAFELY-TPP backend) 
+#   * Computed BMI, which uses SNOMED [height](https://www.opencodelists.org/codelist/opensafely/height-snomed/3b4a3891/) and [weight](https://www.opencodelists.org/codelist/opensafely/weight-snomed/5459abc6/) codes.
 # * Recorded BMI refers to SNOMED-coded events of BMI. 
-# * Derived BMI refers to the canonical definition used in the OpenSAFELY backend using the [`most_recent_bmi()`](https://docs.opensafely.org/study-def-variables/#cohortextractor.patients.most_recent_bmi) function, which returns patients' most recent BMI (in the defined period) either computed from CTV3-coded weight and height measurements or, where they are not available, from recorded BMI values.
+# * most_recent_bmi() refers to the canonical definition used in the OpenSAFELY backend using the [`most_recent_bmi()`](https://docs.opensafely.org/study-def-variables/#cohortextractor.patients.most_recent_bmi) function, which returns patients' most recent BMI (in the defined period) either computed from CTV3-coded weight and height measurements or, where they are not available, from recorded BMI values.
 # 
-# For each registered patient aged 18 to 110 at the time of measurement, we extract up to ten latest BMI measurements (going back in time from 1st May 2022) for each method of derivation.
+# For each registered patient aged 18 to 110 at the time of measurement, we extract up to ten latest BMI measurements (going back from 1st May 2022) for each method of derivation.
 # 
 # To evaluate how well each of these derivations are populated, we count the number of patients with each type of BMI measurement, as well as the number of measurements themselves. We also examine the plausibility of each derivation by looking at the distribution of measurements and counting values out of the expected range. To evaluate how frequently the BMI derivations are recorded, we track the number of new measurements recorded over time and average time between updates.
 # 
@@ -133,7 +133,7 @@ def display_ct(unit, ethnicity_dict, imd_dict):
         # Rename column names
         df_ct = df_ct.rename(
             columns={
-                "derived_bmi_num_measurements":"Derived BMI",
+                "derived_bmi_num_measurements":"most_recent_bmi()",
                 "recorded_bmi_num_measurements":"Recorded BMI",
                 "backend_computed_bmi_num_measurements":"Backend Computed BMI (CTV3)",
                 "computed_bmi_num_measurements":"Computed BMI (SNOMED)",
@@ -145,12 +145,58 @@ def display_ct(unit, ethnicity_dict, imd_dict):
 
 # ### Count of Measurements
 # 
-# Around 22 million patients who have been registered in OpenSAFELY-TPP have each derivation of BMI definition. Derived BMI, which is a combination of backend computed (from CTV3 height and weight codes) and recorded (SNOMED-coded) BMIs, is the most well-populated with 112.2 million measurements. Recorded BMI is second best with 104.7 million and the two computed BMI derivations each have around 84 million records.
+# Around 22 million patients who have been registered in OpenSAFELY-TPP have each derivation of BMI definition. Across all records, each patient has, on average, around 6 or 7 BMI measurements in their records. Hence, the 10 most recent measurements for each derivation are extracted per patient.
+# 
+# most_recent_bmi(), which is a combination of backend computed (from CTV3 height and weight codes) and recorded (SNOMED-coded) BMIs, is the most well-populated with 112.2 million measurements. Recorded BMI is second best with 104.7 million and the two computed BMI derivations each have around 84 million records.
 
 # In[ ]:
 
 
 display_ct("measurement_counts", ethnicity_dict, imd_dict)
+
+
+# ### Frequency of New Measurements
+# 
+# For patients with more than one BMI measurement, the frequency of measurement was computed to describe the frequency of measurements. The CDF plots below show the distribution of repeat measurements across the difference in measurement dates. The plot shows a time difference of 3,600 days (approximately 10 years). Across all four derivations, around 60% of patients with repeat measurements have a follow up measurement within 5 years and greater than 80% of such patients have a follow up measurement within 10 years.
+
+# In[ ]:
+
+
+path2 = "../output/validation/tables"
+
+i = 0
+N = 4
+cols = 2
+rows = int(math.ceil(N / cols))
+
+gs = gridspec.GridSpec(rows, cols)
+fig = plt.figure()
+
+for bmi in ["backend_computed_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]:
+    file = f"{path2}/{bmi}/{bmi}_date_diff_cdf_data.csv"
+    df_temp = pd.read_csv(file,index_col=0)
+    definition = df_temp.columns[0]
+    ax = fig.add_subplot(gs[i]) 
+    ax.step(x = definition, y = 'cdf', data=df_temp)
+    plt.xlim(0,3600)
+    plt.ylim(bottom=0)
+    
+    # Rename labels 
+    if definition == "derived_bmi_date_diff":
+        definition2 = "most_recent_bmi()"
+    elif definition == "recorded_bmi_date_diff": 
+        definition2 = "Recorded BMI"
+    elif definition == "computed_bmi_date_diff":
+        definition2 = "Computed BMI (SNOMED)"
+    else:
+        definition2 = "Backend Computed BMI (CTV3)"
+    
+    ax.set_title(f'{definition2}')
+    i += 1
+
+fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.suptitle("CDF of Days Between BMI Measurements", fontsize=14)
+plt.show()
 
 
 # ### Distributions
@@ -168,7 +214,7 @@ for file in glob.glob(f"{path}/*distribution.csv"):
     # Pull out BMI label
     df_temp["label"] = file.rsplit('/', 1)[-1].rsplit('_', 1)[0]
     # Rename labels 
-    df_temp.loc[df_temp["label"] == "derived_bmi", "label"] = "Derived BMI"
+    df_temp.loc[df_temp["label"] == "derived_bmi", "label"] = "most_recent_bmi()"
     df_temp.loc[df_temp["label"] == "recorded_bmi", "label"] = "Recorded BMI"
     df_temp.loc[df_temp["label"] == "computed_bmi", "label"] = "Computed BMI (SNOMED)"
     df_temp.loc[df_temp["label"] == "backend_computed_bmi", "label"] = "Backend Computed BMI (CTV3)"
@@ -234,7 +280,7 @@ def distribution_by_group(category, code_dict=''):
         
         # Rename labels 
         if definition == "derived_bmi":
-            definition = "Derived BMI"
+            definition = "most_recent_bmi()"
         elif definition == "recorded_bmi": 
             definition = "Recorded BMI"
         elif definition == "computed_bmi":
@@ -298,7 +344,7 @@ def plot_over_time(unit):
 
             # Rename labels 
             if definition == "derived_bmi":
-                definition2 = "Derived BMI"
+                definition2 = "most_recent_bmi()"
             elif definition == "recorded_bmi": 
                 definition2 = "Recorded BMI"
             elif definition == "computed_bmi":
@@ -355,7 +401,7 @@ def plot_over_time_by_group(unit, category, code_dict=""):
 
             # Rename labels 
             if definition == "derived_bmi":
-                definition2 = "Derived BMI"
+                definition2 = "most_recent_bmi()"
             elif definition == "recorded_bmi": 
                 definition2 = "Recorded BMI"
             elif definition == "computed_bmi":
@@ -423,7 +469,7 @@ plot_over_time_by_group("records","learning_disability")
 
 # ### Out-of-range Values
 # 
-# The means for backend computed and computed BMI derivations by month were often unexpectedly high, with spikes at particular time points. For instance, the mean computed BMI was 1.8 million in July 2015. To investigate the extent to which the definitions contained unexpected BMI values, values below 4 and above 200 were counted as out-of-range values. The means of out-of-range values were also computed to gauge the magnitude of the errors.
+# The means for backend computed and computed BMI derivations by month were often unexpectedly high, with spikes at particular time points. For instance, the mean computed BMI was 1.8 million in July 2015. To investigate the extent to which the definitions contained unexpected BMI values, values below 4 and above 200 were counted as out-of-range values. A standard BMI chart shows values from 9 to 65, but we have chosen the end points of implausible extremes. The means of out-of-range values were also computed to gauge the magnitude of the errors.
 # 
 # #### Less than Minimum (BMI < 4)
 # 
@@ -468,8 +514,8 @@ def display_oob(unit):
 
     df_ct = df_ct.rename(
         columns = {
-            "count_derived_bmi":"Derived BMI Count",
-            "mean_derived_bmi":"Derived BMI Mean",
+            "count_derived_bmi":"most_recent_bmi() Count",
+            "mean_derived_bmi":"most_recent_bmi() Mean",
             "count_recorded_bmi":"Recorded BMI Count",
             "mean_recorded_bmi":"Recorded BMI Mean",
             "count_computed_bmi":"Computed BMI (SNOMED) Count",
@@ -490,7 +536,7 @@ display_oob("less_than_min")
 
 # #### Greater than Maximum (BMI > 200)
 # 
-# 0.1% of derived BMI, 0.007% of recorded BMI, 0.2% of backend computed BMI, and 0.2% of computed BMI were greater than 200. The mean of high values in the two computed BMI derivations (159 million) are three orders of magnitude greater than the mean of high values in the derived (274,133) or recorded BMI (552,825) derivations. 
+# 0.1% of most_recent_bmi(), 0.007% of recorded BMI, 0.2% of backend computed BMI, and 0.2% of computed BMI were greater than 200. The mean of high values in the two computed BMI derivations (159 million) are three orders of magnitude greater than the mean of high values in the derived (274,133) or recorded BMI (552,825) derivations. 
 
 # In[ ]:
 
@@ -498,14 +544,14 @@ display_oob("less_than_min")
 display_oob("greater_than_max")
 
 
-# #### CDF of BMI Values
+# #### Empirical Cumulative Distribution Functions (CDF) of BMI Values
 # 
-# However, as the CDF plots show, nearly all measurements fall between 15 and 45 across all definitions. This indicates that the spike in means can be attributed to few extreme outliers. 
+# An empirical Cumulative Distribution Function (CDF) describes the distribution of a measure across the sample. The value of the function at a specified value of the measure is the proportion of observations that are less than or equal to that value. 
+# 
+# As the CDF plots of each derivation show, nearly all measurements fall between 15 and 45 across all definitions. This indicates that the spike in means can be attributed to few extreme outliers. 
 
 # In[ ]:
 
-
-path2 = "../output/validation/tables"
 
 i = 0
 N = 4
@@ -522,7 +568,7 @@ for bmi in ["backend_computed_bmi", "computed_bmi", "derived_bmi", "recorded_bmi
     
     # Rename labels 
     if definition == "derived_bmi":
-        definition2 = "Derived BMI"
+        definition2 = "most_recent_bmi()"
     elif definition == "recorded_bmi": 
         definition2 = "Recorded BMI"
     elif definition == "computed_bmi":
@@ -542,9 +588,9 @@ plt.suptitle(f"CDF of BMI Values", fontsize=14)
 plt.show()
 
 
-# #### Height and Weight CDFs
+# #### Height and Weight CDFs for High Computed BMI Values
 # 
-# The height and weight CDFs for high BMI values are also shown here to highlight the source of the high values. While the weights are mostly in a reasonable range, most of the heights range between -1 and 1. Since the formula to compute BMI is $weight (kg)/(height (m)^2)$, fractional height values would result in very high BMI values.
+# To highlight the source of the high computed BMI values, we investigate the height and weights of high BMI results. While the weights are mostly in a reasonable range, most of the heights associated with high computed BMI values range between -1 and 1. Since the formula to compute BMI is `weight (kg)/(height (m)^2)`, fractional height values would result in very high BMI values.
 
 # In[ ]:
 
@@ -622,7 +668,7 @@ plt.show()
 
 # #### High Computed BMI Over Time
 # 
-# Looking at high computed BMIs by month shows that the prevalence of implausibly high values are decreasing over time. 
+# Looking at high computed BMIs by month shows that the prevalence of implausibly high values are decreasing over time.
 
 # In[ ]:
 
@@ -682,63 +728,21 @@ except:
     print("Not enough data points to plot.")
 
 
-# #### CDF of Difference in Measurement Dates
-# 
-# For patients with more than one BMI measurement, the frequency of measurement was computed to describe the frequency of measurements. The CDF plots below show the distribution of repeat measurements across the difference in measurement dates. The plot shows a time difference of 3,600 days (approximately 10 years). Across all four derivations, around 60% of patients with repeat measurements have a follow up measurement within 5 years and greater than 80% of such patients have a follow up measurement within 10 years.
-
-# In[ ]:
-
-
-i = 0
-N = 4
-cols = 2
-rows = int(math.ceil(N / cols))
-
-gs = gridspec.GridSpec(rows, cols)
-fig = plt.figure()
-
-for bmi in ["backend_computed_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]:
-    file = f"{path2}/{bmi}/{bmi}_date_diff_cdf_data.csv"
-    df_temp = pd.read_csv(file,index_col=0)
-    definition = df_temp.columns[0]
-    ax = fig.add_subplot(gs[i]) 
-    ax.step(x = definition, y = 'cdf', data=df_temp)
-    plt.xlim(0,3600)
-    plt.ylim(bottom=0)
-    
-    # Rename labels 
-    if definition == "derived_bmi_date_diff":
-        definition2 = "Derived BMI"
-    elif definition == "recorded_bmi_date_diff": 
-        definition2 = "Recorded BMI"
-    elif definition == "computed_bmi_date_diff":
-        definition2 = "Computed BMI (SNOMED)"
-    else:
-        definition2 = "Backend Computed BMI (CTV3)"
-    
-    ax.set_title(f'{definition2}')
-    i += 1
-
-fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.suptitle("CDF of Days Between BMI Measurements", fontsize=14)
-plt.show()
-
-
 # ## Discussion
 # 
 # There are three primary constraints in creating the optimal BMI derivation: coverage, accuracy, and computational complexity.
 # 
-# **Coverage:** While all four derivations are similar in the number of patients they cover, derived BMI captures the most number of measurements as it combines computed and recorded BMI definitions.
+# **Coverage:** While all four derivations are similar in the number of patients they cover, most_recent_bmi() captures the most number of measurements as it combines computed and recorded BMI definitions.
 # 
-# **Accuracy:** The two computed BMI definitions contain more erroneous, implausible outliers that affect aggregated statistics such as means. While the recorded BMI derivation has 12 million fewer records than derived BMI, it contains fewer extreme outliers than the computed BMI measurements.
+# **Accuracy:** The two computed BMI definitions contain more erroneous, implausible outliers that affect aggregated statistics such as means. While the recorded BMI derivation has 12 million fewer records than most_recent_bmi(), it contains fewer extreme outliers than the computed BMI measurements.
 # 
-# **Computational complexity:** `most_recent_bmi()` is resource-intensive to run as it executes complex SQL queries to use backend computed BMI in the first instance, and when backend computed BMI is missing, use recorded BMI.
+# **Computational complexity:** The `most_recent_bmi()` function is resource-intensive to run as it executes complex SQL queries to use backend computed BMI in the first instance, and when backend computed BMI is missing, use recorded BMI.
 # 
 # Taking these three constraints into account, there are two recommended solutions to create a consistent derivation of BMI in OpenSAFELY-TPP:
 # 
-# 1. Use recorded BMI, dropping values that fall out of the expected range. This will offer reasonably good coverage, good accuracy with minimal cleaning, and reduce computational complexity. 
+# 1. Use recorded BMI, dropping values that fall out of the expected range. This will offer reasonably good coverage, good accuracy with minimal cleaning, and reduce computational complexity.
 # 
-# 2. Clean both the backend computed and recorded BMI definitions before they are combined to create `most_recent_bmi()`. This will require additional configuration in the backend, which may increase computational complexity, but this method will offer the maximum possible coverage of measurements. 
+# 2. Clean both the backend computed and recorded BMI definitions before they are combined to create most_recent_bmi(). This will require additional configuration in the backend, which may increase computational complexity, but this method will offer the maximum possible coverage of measurements. 
 # 
 # Using either derivation of computed BMI on its own does not offer the best coverage or accuracy. The results also show that the two computed BMI definitions are negligibly different from each other; hence, the CTV3 and SNOMED height and weight codes can be used interchangeably to compute BMI.
 # 
@@ -748,13 +752,19 @@ plt.show()
 # 
 # Due to server memory constraints, the covariates are constrained to extraction at a set index date (1st May 2022), rather than at the time of the event record. The covariates are adjusted to the time of measurement where possible (e.g. age is adjusted to the age at measurement date, based on the patient’s birthday). However, this is more difficult for factors that may change unpredictably over time (e.g. region or IMD) or for more transient clinical conditions (e.g. hypertension). 
 # 
-# Another issue posed by the memory constraints is the lack of cross-checks. Each derivation is analysed in separate scripts. Hence, there are no contingency tables or other analyses that describe overlap between the different derivations.
+# Another issue posed by the memory constraints is the lack of cross-checks. Each derivation is analysed in separate scripts. Hence, there are no contingency tables (frequency tables showing correlations between definitions) or other analyses that describe overlap between the different derivations.
 # 
 # It should also be noted that patients who have not had a measurement show a value of 0 in the records. Because it is not possible to differentiate those who have not had a measurement from those whose measurement was recorded as 0, all 0-valued BMI records were excluded from the above analyses. As any true adult BMI should be greater than 0 (the minimum threshold we use for plausible values is 4), BMI values of 0 should be excluded from analyses regardless. 
 # 
-# ### Conclusion
+# ## Conclusion
 # 
-# This report describes existing methods to derive BMI in OpenSAFELY-TPP and suggests improvements to the standard method. It is a living document that can be periodically re-run to evaluate the most current best practices for research. If you have improvements or forks, please contact the OpenSAFELY data team.
+# This report describes existing methods to derive BMI in OpenSAFELY-TPP and suggests improvements to the standard method. It is a living document that can be periodically re-run to evaluate the most current best practices for research. If you have improvements or forks, please contact the OpenSAFELY data team. 
+# 
+# ## Reference
+# 
+# 1. Du Y, Lv Y, Zha W, Zhou N, Hong X. Association of body mass index (BMI) with critical COVID-19 and in-hospital mortality: A dose-response meta-analysis. Metabolism. 2021;117: 154373.
+# 2. 	Kim TS, Roslin M, Wang JJ, Kane J, Hirsch JS, Kim EJ, et al. BMI as a Risk Factor for Clinical Outcomes in Patients Hospitalized with COVID-19 in New York. Obesity. 2021;29: 279–284.
+# 3. 	Soeroto AY, Soetedjo NN, Purwiga A, Santoso P, Kulsum ID, Suryadinata H, et al. Effect of increased BMI and obesity on the outcome of COVID-19 adult patients: A systematic review and meta-analysis. Diabetes Metab Syndr. 2020;14: 1897–1904.
 
 # In[ ]:
 
