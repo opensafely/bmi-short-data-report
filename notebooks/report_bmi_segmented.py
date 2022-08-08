@@ -172,7 +172,7 @@ rows = int(math.ceil(N / cols))
 gs = gridspec.GridSpec(rows, cols)
 fig = plt.figure()
 
-for bmi in ["backend_computed_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]:
+for bmi in ["derived_bmi", "recorded_bmi", "backend_computed_bmi", "computed_bmi"]:
     file = f"{path2}/{bmi}/{bmi}_date_diff_cdf_data.csv"
     df_temp = pd.read_csv(file,index_col=0)
     definition = df_temp.columns[0]
@@ -208,7 +208,8 @@ plt.show()
 
 li_all = []
 
-for file in glob.glob(f"{path}/*distribution.csv"):
+for bmi in ["computed_bmi", "backend_computed_bmi", "recorded_bmi", "derived_bmi"]:
+    file = f"{path}/{bmi}_distribution.csv"
     df_temp = pd.read_csv(file)
     df_temp = df_temp.loc[df_temp["category"] == "population"]
     # Pull out BMI label
@@ -253,7 +254,8 @@ def distribution_by_group(category, code_dict=''):
     gs = gridspec.GridSpec(rows, cols)
     fig = plt.figure()
     
-    for file in glob.glob(f"{path}/*distribution.csv"):
+    for bmi in ["derived_bmi", "recorded_bmi", "backend_computed_bmi", "computed_bmi"]:
+        file = f"{path}/{bmi}_distribution.csv"
         df_temp = pd.read_csv(file)
         df_temp = df_temp.loc[(df_temp["subcategory"] != "missing") & (df_temp["subcategory"] != "Unknown")]
         df_temp = df_temp.loc[df_temp["category"] == f"{category}"].drop(columns=["category"]).rename(columns={"subcategory":"label"})
@@ -335,7 +337,8 @@ def plot_over_time(unit):
     gs = gridspec.GridSpec(rows, cols)
     fig = plt.figure()
     
-    for file in glob.glob(f"{path}/*_{unit}_over_time.csv"):
+    for bmi in ["derived_bmi", "recorded_bmi", "backend_computed_bmi", "computed_bmi"]:
+        file = f"{path}/{bmi}_{unit}_over_time.csv"
         if "high" not in file:
             df_in = pd.read_csv(file)
             definition  = file.rsplit('/', 1)[-1].rsplit(f'_{unit}', 1)[0]
@@ -387,7 +390,8 @@ def plot_over_time_by_group(unit, category, code_dict=""):
     gs = gridspec.GridSpec(rows, cols)
     fig = plt.figure()
     
-    for file in glob.glob(f"{path}/*_{unit}_over_time.csv"):
+    for bmi in ["derived_bmi", "recorded_bmi", "backend_computed_bmi", "computed_bmi"]:
+        file = f"{path}/{bmi}_{unit}_over_time.csv"
         if "high" not in file:
             df_temp = pd.read_csv(file)
             df_temp = df_temp.loc[df_temp["category"] == f"{category}"].drop(columns=["category"])
@@ -561,7 +565,7 @@ rows = int(math.ceil(N / cols))
 gs = gridspec.GridSpec(rows, cols)
 fig = plt.figure()
 
-for bmi in ["backend_computed_bmi", "computed_bmi", "derived_bmi", "recorded_bmi"]:
+for bmi in ["derived_bmi", "recorded_bmi", "backend_computed_bmi", "computed_bmi"]:
     file = f"{path2}/{bmi}/{bmi}_cdf_data.csv"
     df_temp = pd.read_csv(file,index_col=0)
     definition = df_temp.columns[0]
@@ -685,32 +689,35 @@ def high_plot_over_time(unit):
     for file in glob.glob(f"{path2}/high_*/*_bmi_{unit}_over_time.csv"):
         if "high" in file:
             df_in = pd.read_csv(file)
-            definition  = file.rsplit('/', 1)[-1].rsplit(f'_{unit}', 1)[0]
-            df_sub = df_in.loc[df_in["category"] == "population"]
-            df_sub = df_sub.loc[df_sub["date"] != "2022-05-01"]
+            if len(df_in) > 0:
+                definition  = file.rsplit('/', 1)[-1].rsplit(f'_{unit}', 1)[0]
+                df_sub = df_in.loc[df_in["category"] == "population"]
+                df_sub = df_sub.loc[df_sub["date"] != "2022-05-01"]
 
-            # Rename labels 
-            if definition == "high_computed_bmi":
-                definition2 = "Computed BMI (SNOMED)"
-            else:
-                definition2 = "Backend Computed BMI (CTV3)"
-            df_sub = df_sub.rename(columns={"date":"Date"})
-            
-            ax = fig.add_subplot(gs[i]) 
-            
-            if unit == "records":
-                df_sub = df_sub.rename(columns={f"{definition}": f"{definition2}"})
-                df_sub[f"{definition2}"] = df_sub[f"{definition2}"].astype(float)
-                ax = sns.lineplot(x="Date", y=f"{definition2}", data=df_sub)
-                ax.set_title(f"{definition2}")
-            else:
-                df_sub["mean"] = df_sub["mean"].astype(float)
-                ax = sns.lineplot(x="Date", y="mean", data=df_sub)
-                ax.set_title(f"{definition2}")
+                # Rename labels 
+                if definition == "high_computed_bmi":
+                    definition2 = "Computed BMI (SNOMED)"
+                else:
+                    definition2 = "Backend Computed BMI (CTV3)"
+                df_sub = df_sub.rename(columns={"date":"Date"})
 
-            i += 1
-            l = plt.xticks(df_sub["Date"][0::6])
-            plt.xticks(rotation=60)
+                ax = fig.add_subplot(gs[i]) 
+
+                if unit == "records":
+                    df_sub = df_sub.rename(columns={f"{definition}": f"{definition2}"})
+                    df_sub[f"{definition2}"] = df_sub[f"{definition2}"].astype(float)
+                    ax = sns.lineplot(x="Date", y=f"{definition2}", data=df_sub)
+                    ax.set_title(f"{definition2}")
+                else:
+                    df_sub["mean"] = df_sub["mean"].astype(float)
+                    ax = sns.lineplot(x="Date", y="mean", data=df_sub)
+                    ax.set_title(f"{definition2}")
+
+                i += 1
+                l = plt.xticks(df_sub["Date"][0::6])
+                plt.xticks(rotation=60)
+            else: 
+                print("No observations to be plotted.")
 
             
     unit2 = unit.title()
@@ -722,10 +729,7 @@ def high_plot_over_time(unit):
 # In[ ]:
 
 
-try:
-    high_plot_over_time("records")
-except:
-    print("Not enough data points to plot.")
+high_plot_over_time("records")
 
 
 # ## Discussion
