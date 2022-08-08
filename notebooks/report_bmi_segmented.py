@@ -66,6 +66,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 plt.rcParams["figure.figsize"] = [16, 12]
 
 path = "../output/validation/formatted_tables"
+path2 = "../output/validation/tables"
 
 ethnicity_dict = {
     "True": "White",
@@ -161,8 +162,6 @@ display_ct("measurement_counts", ethnicity_dict, imd_dict)
 
 # In[ ]:
 
-
-path2 = "../output/validation/tables"
 
 i = 0
 N = 4
@@ -686,7 +685,7 @@ def high_plot_over_time(unit):
     gs = gridspec.GridSpec(rows, cols)
     fig = plt.figure()
 
-    for file in glob.glob(f"{path2}/high_*/*_bmi_{unit}_over_time.csv"):
+    for file in glob.glob(f"{path}/high_*{unit}_over_time.csv"):
         if "high" in file:
             df_in = pd.read_csv(file)
             if len(df_in) > 0:
