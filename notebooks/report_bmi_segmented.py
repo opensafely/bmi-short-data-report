@@ -20,13 +20,13 @@
 # OpenSAFELY-TPP runs inside TPP’s data centre which contains the primary care records for all patients registered at practices using TPP’s SystmOne Clinical Information System. This data centre also imports external datasets from other sources, including A&E attendances and hospital admissions from NHS Digital’s Secondary Use Service, and death registrations from the ONS. More information on available data sources can be found within the [OpenSAFELY documentation](https://docs.opensafely.org/data-sources/intro/). 
 # 
 # ## Methods
-# We define four variable derivations: backend computed BMI (CTV3), computed BMI (SNOMED), recorded BMI, and most_recent_bmi().
+# We define four variable derivations: "CTV3-calculated BMI" (derived from CTV3 height and weight), "SNOMED-calculated BMI" (derived from snomed height and weight), "SNOMED-recorded BMI" (derived from directly recorded BMI values in snomed), and "composite BMI" (derived from CTV3-calculated BMI or SNOMED-recorded BMI, and implemented using most_recent_bmi function).
 # 
-# * Computed BMI refers to BMI calculated from height and weight measurements. Previous height records are carried over to the future to compute BMI with the assumption that there is little variation in an individual’s height in adulthood. New BMI records are only computed when there is a new weight measurement, as there can be greater variation in weights. Height and weight measurements are derived using two sets of codelists, so we compare the derivations created using each of these codelists: 
-#   * Backend computed BMI, which uses CTV3 height ("XM01E", "229..") and weight ("X76C7", "22A..") codes (used in the OpenSAFELY-TPP backend) 
-#   * Computed BMI, which uses SNOMED [height](https://www.opencodelists.org/codelist/opensafely/height-snomed/3b4a3891/) and [weight](https://www.opencodelists.org/codelist/opensafely/weight-snomed/5459abc6/) codes.
-# * Recorded BMI refers to SNOMED-coded events of BMI. 
-# * most_recent_bmi() refers to the canonical definition used in the OpenSAFELY backend using the [`most_recent_bmi()`](https://docs.opensafely.org/study-def-variables/#cohortextractor.patients.most_recent_bmi) function, which returns patients' most recent BMI (in the defined period) either computed from CTV3-coded weight and height measurements or, where they are not available, from recorded BMI values.
+# * Calculated BMI refers to BMI calculated from height and weight measurements. Previous height records are carried over to the future to compute BMI with the assumption that there is little variation in an individual’s height in adulthood. New BMI records are only calculated when there is a new weight measurement, as there can be greater variation in weights. Height and weight measurements are derived using two sets of codelists, so we compare the derivations created using each of these codelists: 
+#   * CTV3-calculated BMI, which uses CTV3 height ("XM01E", "229..") and weight ("X76C7", "22A..") codes (used in the OpenSAFELY-TPP backend) 
+#   * SNOMED-calculated BMI, which uses SNOMED [height](https://www.opencodelists.org/codelist/opensafely/height-snomed/3b4a3891/) and [weight](https://www.opencodelists.org/codelist/opensafely/weight-snomed/5459abc6/) codes.
+# * SNOMED-recorded BMI refers to SNOMED-coded events of BMI. 
+# * Composite BMI refers to the canonical definition used in the OpenSAFELY backend using the [`most_recent_bmi()`](https://docs.opensafely.org/study-def-variables/#cohortextractor.patients.most_recent_bmi) function, which returns patients' most recent BMI (in the defined period) either calculated from CTV3-coded weight and height measurements or, where they are not available, from SNOMED-recorded BMI values.
 # 
 # For each registered patient aged 18 to 110 at the time of measurement, we extract up to ten latest BMI measurements (going back from 1st May 2022) for each method of derivation.
 # 
@@ -134,10 +134,10 @@ def display_ct(unit, ethnicity_dict, imd_dict):
         # Rename column names
         df_ct = df_ct.rename(
             columns={
-                "derived_bmi_num_measurements":"most_recent_bmi()",
-                "recorded_bmi_num_measurements":"Recorded BMI",
-                "backend_computed_bmi_num_measurements":"Backend Computed BMI (CTV3)",
-                "computed_bmi_num_measurements":"Computed BMI (SNOMED)",
+                "derived_bmi_num_measurements":"Composite BMI",
+                "recorded_bmi_num_measurements":"SNOMED-recorded BMI",
+                "backend_computed_bmi_num_measurements":"CTV3-calculated BMI",
+                "computed_bmi_num_measurements":"SNOMED-calculated BMI",
             }
         )
 
@@ -148,7 +148,7 @@ def display_ct(unit, ethnicity_dict, imd_dict):
 # 
 # Around 22 million patients who have been registered in OpenSAFELY-TPP have each derivation of BMI definition. Across all records, each patient has, on average, around 6 or 7 BMI measurements in their records. Hence, the 10 most recent measurements for each derivation are extracted per patient.
 # 
-# most_recent_bmi(), which is a combination of backend computed (from CTV3 height and weight codes) and recorded (SNOMED-coded) BMIs, is the most well-populated with 112.2 million measurements. Recorded BMI is second best with 104.7 million and the two computed BMI derivations each have around 84 million records.
+# Composite BMI, which is a combination of CTV3-calculated and SNOMED-recorded BMIs, is the most well-populated with 112.2 million measurements. Recorded BMI is second best with 104.7 million and the two calculated BMI derivations each have around 84 million records.
 
 # In[ ]:
 
@@ -182,13 +182,13 @@ for bmi in ["derived_bmi", "recorded_bmi", "backend_computed_bmi", "computed_bmi
     
     # Rename labels 
     if definition == "derived_bmi_date_diff":
-        definition2 = "most_recent_bmi()"
+        definition2 = "Composite BMI"
     elif definition == "recorded_bmi_date_diff": 
-        definition2 = "Recorded BMI"
+        definition2 = "SNOMED-recorded BMI"
     elif definition == "computed_bmi_date_diff":
-        definition2 = "Computed BMI (SNOMED)"
+        definition2 = "SNOMED-calculated BMI (SNOMED)"
     else:
-        definition2 = "Backend Computed BMI (CTV3)"
+        definition2 = "CTV3-calculated BMI (CTV3)"
     
     ax.set_title(f'{definition2}')
     i += 1
@@ -214,10 +214,10 @@ for bmi in ["computed_bmi", "backend_computed_bmi", "recorded_bmi", "derived_bmi
     # Pull out BMI label
     df_temp["label"] = file.rsplit('/', 1)[-1].rsplit('_', 1)[0]
     # Rename labels 
-    df_temp.loc[df_temp["label"] == "derived_bmi", "label"] = "most_recent_bmi()"
-    df_temp.loc[df_temp["label"] == "recorded_bmi", "label"] = "Recorded BMI"
-    df_temp.loc[df_temp["label"] == "computed_bmi", "label"] = "Computed BMI (SNOMED)"
-    df_temp.loc[df_temp["label"] == "backend_computed_bmi", "label"] = "Backend Computed BMI (CTV3)"
+    df_temp.loc[df_temp["label"] == "derived_bmi", "label"] = "Composite BMI"
+    df_temp.loc[df_temp["label"] == "recorded_bmi", "label"] = "SNOMED-recorded BMI"
+    df_temp.loc[df_temp["label"] == "computed_bmi", "label"] = "SNOMED-calculated BMI"
+    df_temp.loc[df_temp["label"] == "backend_computed_bmi", "label"] = "CTV3-calculated BMI"
     # Rename columns to statistics necessary to plot
     df_temp = df_temp.rename(columns={
         "lower_extreme": "whislo",
@@ -281,13 +281,13 @@ def distribution_by_group(category, code_dict=''):
         
         # Rename labels 
         if definition == "derived_bmi":
-            definition = "most_recent_bmi()"
+            definition = "Composite BMI"
         elif definition == "recorded_bmi": 
-            definition = "Recorded BMI"
+            definition = "SNOMED-recorded BMI"
         elif definition == "computed_bmi":
-            definition = "Computed BMI (SNOMED)"
+            definition = "SNOMED-calculated BMI"
         else:
-            definition = "Backend Computed BMI (CTV3)"
+            definition = "CTV3-calculated BMI"
             
         # Create category for title
         cat = category.replace("_"," ").title()
@@ -346,13 +346,13 @@ def plot_over_time(unit):
 
             # Rename labels 
             if definition == "derived_bmi":
-                definition2 = "most_recent_bmi()"
+                definition2 = "Composite BMI"
             elif definition == "recorded_bmi": 
-                definition2 = "Recorded BMI"
+                definition2 = "SNOMED-recorded BMI"
             elif definition == "computed_bmi":
-                definition2 = "Computed BMI (SNOMED)"
+                definition2 = "SNOMED-calculated BMI"
             else:
-                definition2 = "Backend Computed BMI (CTV3)"
+                definition2 = "CTV3-calculated BMI"
             df_sub = df_sub.rename(columns={"date":"Date"})
             
             # Plot the figures
@@ -404,13 +404,13 @@ def plot_over_time_by_group(unit, category, code_dict=""):
 
             # Rename labels 
             if definition == "derived_bmi":
-                definition2 = "most_recent_bmi()"
+                definition2 = "Composite BMI"
             elif definition == "recorded_bmi": 
-                definition2 = "Recorded BMI"
+                definition2 = "SNOMED-recorded BMI"
             elif definition == "computed_bmi":
-                definition2 = "Computed BMI (SNOMED)"
+                definition2 = "SNOMED-calculated BMI"
             else:
-                definition2 = "Backend Computed BMI (CTV3)"
+                definition2 = "CTV3-calculated BMI"
             df_temp = df_temp.rename(columns={"date":"Date"})
 
             if (category == "learning_disability") | (category == "diabetes") | (category == "dementia"):
@@ -472,11 +472,11 @@ plot_over_time_by_group("records","learning_disability")
 
 # ### Out-of-range Values
 # 
-# The means for backend computed and computed BMI derivations by month were often unexpectedly high, with spikes at particular time points. For instance, the mean computed BMI was 1.8 million in July 2015. To investigate the extent to which the definitions contained unexpected BMI values, values below 4 and above 200 were counted as out-of-range values. A standard BMI chart shows values from 9 to 65, but we have chosen the end points of implausible extremes. The means of out-of-range values were also computed to gauge the magnitude of the errors.
+# The means for CTV3-calculated and SNOMED-calculated BMI derivations by month were often unexpectedly high, with spikes at particular time points. For instance, the mean SNOMED-calculated BMI was 1.8 million in July 2015. To investigate the extent to which the definitions contained unexpected BMI values, values below 4 and above 200 were counted as out-of-range values. A standard BMI chart shows values from 9 to 65, but we have chosen the end points of implausible extremes. The means of out-of-range values were also computed to gauge the magnitude of the errors.
 # 
 # #### Less than Minimum (BMI < 4)
 # 
-# 0.1% of derived and recorded BMI values were below the minimum threshold (less than 4). 0.2% of backend computed BMI and 0.2% of computed BMI were less than the threshold.
+# 0.1% of derived and recorded BMI values were below the minimum threshold (less than 4). 0.2% of CTV3-calculated BMI and 0.2% of SNOMED-calculated BMI were less than the threshold.
 
 # In[ ]:
 
@@ -517,14 +517,14 @@ def display_oob(unit):
 
     df_ct = df_ct.rename(
         columns = {
-            "count_derived_bmi":"most_recent_bmi() Count",
-            "mean_derived_bmi":"most_recent_bmi() Mean",
-            "count_recorded_bmi":"Recorded BMI Count",
-            "mean_recorded_bmi":"Recorded BMI Mean",
-            "count_computed_bmi":"Computed BMI (SNOMED) Count",
-            "mean_computed_bmi":"Computed BMI (SNOMED) Mean",
-            "count_backend_computed_bmi":"Backend Computed BMI (CTV3) Count",
-            "mean_backend_computed_bmi":"Backend Computed BMI (CTV3) Mean",
+            "count_derived_bmi":"Composite BMI Count",
+            "mean_derived_bmi":"Composite BMI Mean",
+            "count_recorded_bmi":"SNOMED-recorded BMI Count",
+            "mean_recorded_bmi":"SNOMED-recorded BMI Mean",
+            "count_computed_bmi":"SNOMED-calculated BMI Count",
+            "mean_computed_bmi":"SNOMED-calculated BMI Mean",
+            "count_backend_computed_bmi":"CTV3-calculated BMI Count",
+            "mean_backend_computed_bmi":"CTV3-calculated BMI Mean",
         }                       
     )
         
@@ -539,7 +539,7 @@ display_oob("less_than_min")
 
 # #### Greater than Maximum (BMI > 200)
 # 
-# 0.1% of most_recent_bmi(), 0.007% of recorded BMI, 0.2% of backend computed BMI, and 0.2% of computed BMI were greater than 200. The mean of high values in the two computed BMI derivations (159 million) are three orders of magnitude greater than the mean of high values in the derived (274,133) or recorded BMI (552,825) derivations. 
+# 0.1% of composite BMI, 0.007% of recorded BMI, 0.2% of CTV3-calculated BMI, and 0.2% of SNOMED-calculated BMI were greater than 200. The mean of high values in the two calculated BMI derivations (159 million) are three orders of magnitude greater than the mean of high values in the derived (274,133) or recorded BMI (552,825) derivations. 
 
 # In[ ]:
 
@@ -571,13 +571,13 @@ for bmi in ["derived_bmi", "recorded_bmi", "backend_computed_bmi", "computed_bmi
     
     # Rename labels 
     if definition == "derived_bmi":
-        definition2 = "most_recent_bmi()"
+        definition2 = "Composite BMI"
     elif definition == "recorded_bmi": 
-        definition2 = "Recorded BMI"
+        definition2 = "SNOMED-recorded BMI"
     elif definition == "computed_bmi":
-        definition2 = "Computed BMI (SNOMED)"
+        definition2 = "SNOMED-calculated BMI"
     else:
-        definition2 = "Backend Computed BMI (CTV3)"
+        definition2 = "CTV3-calculated BMI"
     
     ax = fig.add_subplot(gs[i])
     ax.step(x = definition, y = 'cdf', data=df_temp)
@@ -591,9 +591,9 @@ plt.suptitle(f"CDF of BMI Values", fontsize=14)
 plt.show()
 
 
-# #### Height and Weight CDFs for High Computed BMI Values
+# #### Height and Weight CDFs for High Calculated BMI Values
 # 
-# To highlight the source of the high computed BMI values, we investigate the height and weights of high BMI results. While the weights are mostly in a reasonable range, most of the heights associated with high computed BMI values range between -1 and 1. Since the formula to compute BMI is `weight (kg)/(height (m)^2)`, fractional height values would result in very high BMI values.
+# To highlight the source of the high calculated BMI values, we investigate the height and weights of high BMI results. While the weights are mostly in a reasonable range, most of the heights associated with high calculated BMI values range between -1 and 1. Since the formula to compute BMI is `weight (kg)/(height (m)^2)`, fractional height values would result in very high BMI values.
 
 # In[ ]:
 
@@ -629,7 +629,7 @@ for file in glob.glob(f"{path2}/high_backend_computed_bmi/*eight_backend_cdf_dat
     i += 1
 
 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.suptitle(f"CDF of Heights and Weights for Backend Computed BMI (SNOMED)", fontsize=14)
+plt.suptitle(f"CDF of Heights and Weights for CTV3-calculated BMI", fontsize=14)
 plt.show()
 
 
@@ -665,13 +665,13 @@ for file in glob.glob(f"{path2}/high_computed_bmi/*eight_cdf_data.csv"):
     i += 1
 
 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.suptitle(f"CDF of Heights and Weights for Computed BMI (SNOMED)", fontsize=14)
+plt.suptitle(f"CDF of Heights and Weights for SNOMED-calculated BMI", fontsize=14)
 plt.show()
 
 
-# #### High Computed BMI Over Time
+# #### High Calculated BMI Over Time
 # 
-# Looking at high computed BMIs by month shows that the prevalence of implausibly high values are decreasing over time.
+# Looking at high calculated BMIs by month shows that the prevalence of implausibly high values are decreasing over time.
 
 # In[ ]:
 
@@ -695,9 +695,9 @@ def high_plot_over_time(unit):
 
                 # Rename labels 
                 if definition == "high_computed_bmi":
-                    definition2 = "Computed BMI (SNOMED)"
+                    definition2 = "SNOMED-calculated BMI"
                 else:
-                    definition2 = "Backend Computed BMI (CTV3)"
+                    definition2 = "CTV3-calculated BMI"
                 df_sub = df_sub.rename(columns={"date":"Date"})
 
                 ax = fig.add_subplot(gs[i]) 
@@ -721,7 +721,7 @@ def high_plot_over_time(unit):
             
     unit2 = unit.title()
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.suptitle(f"{unit2} of High Computed BMI", fontsize=14)
+    plt.suptitle(f"{unit2} of High Calculated BMI", fontsize=14)
     plt.show()  
 
 
@@ -735,19 +735,19 @@ high_plot_over_time("records")
 # 
 # There are three primary constraints in creating the optimal BMI derivation: coverage, accuracy, and computational complexity.
 # 
-# **Coverage:** While all four derivations are similar in the number of patients they cover, most_recent_bmi() captures the most number of measurements as it combines computed and recorded BMI definitions.
+# **Coverage:** While all four derivations are similar in the number of patients they cover, composite BMI captures the most number of measurements as it combines CTV3-calculated and SNOMED-recorded BMI definitions.
 # 
-# **Accuracy:** The two computed BMI definitions contain more erroneous, implausible outliers that affect aggregated statistics such as means. While the recorded BMI derivation has 12 million fewer records than most_recent_bmi(), it contains fewer extreme outliers than the computed BMI measurements.
+# **Accuracy:** The two calculated BMI definitions contain more erroneous, implausible outliers that affect aggregated statistics such as means. While the recorded BMI derivation has 12 million fewer records than composite BMI, it contains fewer extreme outliers than the calculated BMI measurements.
 # 
-# **Computational complexity:** The `most_recent_bmi()` function is resource-intensive to run as it executes complex SQL queries to use backend computed BMI in the first instance, and when backend computed BMI is missing, use recorded BMI.
+# **Computational complexity:** The `most_recent_bmi()` function (used to derive composite BMI) is resource-intensive to run as it executes complex SQL queries to use CTV3-calculated BMI in the first instance, and when CTV3-calculated BMI is missing, use recorded BMI.
 # 
 # Taking these three constraints into account, there are two recommended solutions to create a consistent derivation of BMI in OpenSAFELY-TPP:
 # 
-# 1. Use recorded BMI, dropping values that fall out of the expected range. This will offer reasonably good coverage, good accuracy with minimal cleaning, and reduce computational complexity.
+# 1. Use SNOMED-recorded BMI, dropping values that fall out of the expected range. This will offer reasonably good coverage, good accuracy with minimal cleaning, and reduce computational complexity.
 # 
-# 2. Clean both the backend computed and recorded BMI definitions before they are combined to create most_recent_bmi(). This will require additional configuration in the backend, which may increase computational complexity, but this method will offer the maximum possible coverage of measurements. 
+# 2. Clean both the CTV3-calculated and SNOMED-recorded BMI definitions before they are combined to create composite BMI. This will require additional configuration in the backend, which may increase computational complexity, but this method will offer the maximum possible coverage of measurements. 
 # 
-# Using either derivation of computed BMI on its own does not offer the best coverage or accuracy. The results also show that the two computed BMI definitions are negligibly different from each other; hence, the CTV3 and SNOMED height and weight codes can be used interchangeably to compute BMI.
+# Using either derivation of calculated BMI on its own does not offer the best coverage or accuracy. The results also show that the two calculated BMI definitions are negligibly different from each other; hence, the CTV3 and SNOMED height and weight codes can be used interchangeably to calculate BMI.
 # 
 # ### Limitations
 # 
