@@ -20,10 +20,10 @@
 # OpenSAFELY-TPP runs inside TPP’s data centre which contains the primary care records for all patients registered at practices using TPP’s SystmOne Clinical Information System. This data centre also imports external datasets from other sources, including A&E attendances and hospital admissions from NHS Digital’s Secondary Use Service, and death registrations from the ONS. More information on available data sources can be found within the [OpenSAFELY documentation](https://docs.opensafely.org/data-sources/intro/). 
 # 
 # ## Methods
-# We define four variable derivations: "CTV3-calculated BMI" (derived from CTV3 height and weight), "SNOMED-calculated BMI" (derived from snomed height and weight), "SNOMED-recorded BMI" (derived from directly recorded BMI values in snomed), and "composite BMI" (derived from CTV3-calculated BMI or SNOMED-recorded BMI, and implemented using most_recent_bmi function).
+# We define four variable derivations: "CTV3-calculated BMI" (derived from CTV3 height and weight), "SNOMED-calculated BMI" (derived from SNOMED height and weight), "SNOMED-recorded BMI" (derived from directly recorded BMI values in snomed), and "composite BMI" (derived from CTV3-calculated BMI or SNOMED-recorded BMI, and implemented using most_recent_bmi function).
 # 
 # * Calculated BMI refers to BMI calculated from height and weight measurements. Previous height records are carried over to the future to compute BMI with the assumption that there is little variation in an individual’s height in adulthood. New BMI records are only calculated when there is a new weight measurement, as there can be greater variation in weights. Height and weight measurements are derived using two sets of codelists, so we compare the derivations created using each of these codelists: 
-#   * CTV3-calculated BMI, which uses CTV3 height ("XM01E", "229..") and weight ("X76C7", "22A..") codes (used in the OpenSAFELY-TPP backend) 
+#   * CTV3-calculated BMI, which uses CTV3 height ("XM01E", "229..") and weight ("X76C7", "22A..") codes used in the OpenSAFELY-TPP backend.
 #   * SNOMED-calculated BMI, which uses SNOMED [height](https://www.opencodelists.org/codelist/opensafely/height-snomed/3b4a3891/) and [weight](https://www.opencodelists.org/codelist/opensafely/weight-snomed/5459abc6/) codes.
 # * SNOMED-recorded BMI refers to SNOMED-coded events of BMI. 
 # * Composite BMI refers to the canonical definition used in the OpenSAFELY backend using the [`most_recent_bmi()`](https://docs.opensafely.org/study-def-variables/#cohortextractor.patients.most_recent_bmi) function, which returns patients' most recent BMI (in the defined period) either calculated from CTV3-coded weight and height measurements or, where they are not available, from SNOMED-recorded BMI values.
@@ -148,7 +148,7 @@ def display_ct(unit, ethnicity_dict, imd_dict):
 # 
 # Around 22 million patients who have been registered in OpenSAFELY-TPP have each derivation of BMI definition. Across all records, each patient has, on average, around 6 or 7 BMI measurements in their records. Hence, the 10 most recent measurements for each derivation are extracted per patient.
 # 
-# Composite BMI, which is a combination of CTV3-calculated and SNOMED-recorded BMIs, is the most well-populated with 112.2 million measurements. Recorded BMI is second best with 104.7 million and the two calculated BMI derivations each have around 84 million records.
+# Composite BMI, which is a combination of CTV3-calculated and SNOMED-recorded BMIs, is the most well-populated with 112.2 million measurements. SNOMED-recorded BMI is second best with 104.7 million and the two calculated BMI derivations each have around 84 million records.
 
 # In[ ]:
 
