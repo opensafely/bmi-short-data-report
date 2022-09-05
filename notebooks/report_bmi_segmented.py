@@ -20,7 +20,7 @@
 # OpenSAFELY-TPP runs inside TPP’s data centre which contains the primary care records for all patients registered at practices using TPP’s SystmOne Clinical Information System. This data centre also imports external datasets from other sources, including A&E attendances and hospital admissions from NHS Digital’s Secondary Use Service, and death registrations from the ONS. More information on available data sources can be found within the [OpenSAFELY documentation](https://docs.opensafely.org/data-sources/intro/). 
 # 
 # ## Methods
-# We define four variable derivations: "CTV3-calculated BMI" (derived from CTV3 height and weight), "SNOMED-calculated BMI" (derived from SNOMED height and weight), "SNOMED-recorded BMI" (derived from directly recorded BMI values in snomed), and "composite BMI" (derived from CTV3-calculated BMI or SNOMED-recorded BMI, and implemented using most_recent_bmi function).
+# We define four variable derivations: "CTV3-calculated BMI" (derived from CTV3 height and weight), "SNOMED-calculated BMI" (derived from SNOMED height and weight), "SNOMED-recorded BMI" (derived from directly recorded BMI values in SNOMED), and "composite BMI" (derived from CTV3-calculated BMI or SNOMED-recorded BMI, and implemented using most_recent_bmi function).
 # 
 # * Calculated BMI refers to BMI calculated from height and weight measurements. Previous height records are carried over to the future to compute BMI with the assumption that there is little variation in an individual’s height in adulthood. New BMI records are only calculated when there is a new weight measurement, as there can be greater variation in weights. Height and weight measurements are derived using two sets of codelists, so we compare the derivations created using each of these codelists: 
 #   * CTV3-calculated BMI, which uses CTV3 height ("XM01E", "229..") and weight ("X76C7", "22A..") codes used in the OpenSAFELY-TPP backend.
@@ -476,7 +476,7 @@ plot_over_time_by_group("records","learning_disability")
 # 
 # #### Less than Minimum (BMI < 4)
 # 
-# 0.1% of derived and recorded BMI values were below the minimum threshold (less than 4). 0.2% of CTV3-calculated BMI and 0.2% of SNOMED-calculated BMI were less than the threshold.
+# 0.1% of composite BMI and SNOMED-recorded BMI values were below the minimum threshold (less than 4). 0.2% of CTV3-calculated BMI and 0.2% of SNOMED-calculated BMI were less than the threshold.
 
 # In[ ]:
 
@@ -539,7 +539,7 @@ display_oob("less_than_min")
 
 # #### Greater than Maximum (BMI > 200)
 # 
-# 0.1% of composite BMI, 0.007% of recorded BMI, 0.2% of CTV3-calculated BMI, and 0.2% of SNOMED-calculated BMI were greater than 200. The mean of high values in the two calculated BMI derivations (159 million) are three orders of magnitude greater than the mean of high values in the derived (274,133) or recorded BMI (552,825) derivations. 
+# 0.1% of composite BMI, 0.007% of recorded BMI, 0.2% of CTV3-calculated BMI, and 0.2% of SNOMED-calculated BMI were greater than 200. The mean of high values in the two calculated BMI derivations (159 million) are three orders of magnitude greater than the mean of high values in the composite (274,133) or SNOMED-recorded BMI (552,825) derivations. 
 
 # In[ ]:
 
