@@ -45,6 +45,8 @@
 # * Dementia
 # * Diabetes
 # * Learning disability
+# 
+# In the empirical cumulative distribution function charts, steps were deferred until there were at least 5 observations, then midpoint rounding was applied. In all other analyses, any counts below 6 were redacted, and all other values were rounded to the nearest 5. 
 
 # ## Results
 
@@ -158,7 +160,9 @@ display_ct("measurement_counts", ethnicity_dict, imd_dict)
 
 # ### Frequency of New Measurements
 # 
-# For patients with more than one BMI measurement, the frequency of measurement was computed to describe the frequency of measurements. The CDF plots below show the distribution of repeat measurements across the difference in measurement dates. The plot shows a time difference of 3,600 days (approximately 10 years). Across all four derivations, around 60% of patients with repeat measurements have a follow up measurement within 5 years and greater than 80% of such patients have a follow up measurement within 10 years.
+# For patients with more than one BMI measurement, the frequency of measurement was computed to describe the frequency of measurements. The CDF plots below show the distribution of repeat measurements across the difference in measurement dates. An empirical Cumulative Distribution Function (CDF) describes the distribution of a measure across the sample. The value of the function at a specified value of the measure is the proportion of observations that are less than or equal to that value. 
+# 
+# The plot shows a time difference of 3,600 days (approximately 10 years). Across all four derivations, around 60% of patients with repeat measurements have a follow up measurement within 5 years and greater than 80% of such patients have a follow up measurement within 10 years.
 
 # In[ ]:
 
@@ -476,7 +480,7 @@ plot_over_time_by_group("records","learning_disability")
 # 
 # #### Less than Minimum (BMI < 4)
 # 
-# 0.1% of composite BMI and SNOMED-recorded BMI values were below the minimum threshold (less than 4). 0.2% of CTV3-calculated BMI and 0.2% of SNOMED-calculated BMI were less than the threshold.
+# The table below summarises BMI below the minimum threshold (BMI < 4). 0.1% of composite BMI and SNOMED-recorded BMI values were below the minimum threshold (less than 4). 0.2% of CTV3-calculated BMI and 0.2% of SNOMED-calculated BMI were less than the threshold.
 
 # In[ ]:
 
@@ -539,7 +543,7 @@ display_oob("less_than_min")
 
 # #### Greater than Maximum (BMI > 200)
 # 
-# 0.1% of composite BMI, 0.007% of recorded BMI, 0.2% of CTV3-calculated BMI, and 0.2% of SNOMED-calculated BMI were greater than 200. The mean of high values in the two calculated BMI derivations (159 million) are three orders of magnitude greater than the mean of high values in the composite (274,133) or SNOMED-recorded BMI (552,825) derivations. 
+# The table below summarises BMI above the maximum threshold (BMI > 200). 0.1% of composite BMI, 0.007% of recorded BMI, 0.2% of CTV3-calculated BMI, and 0.2% of SNOMED-calculated BMI were greater than 200. The mean of high values in the two calculated BMI derivations (159 million) are three orders of magnitude greater than the mean of high values in the composite (274,133) or SNOMED-recorded BMI (552,825) derivations. 
 
 # In[ ]:
 
@@ -548,8 +552,6 @@ display_oob("greater_than_max")
 
 
 # #### Empirical Cumulative Distribution Functions (CDF) of BMI Values
-# 
-# An empirical Cumulative Distribution Function (CDF) describes the distribution of a measure across the sample. The value of the function at a specified value of the measure is the proportion of observations that are less than or equal to that value. 
 # 
 # As the CDF plots of each derivation show, nearly all measurements fall between 15 and 45 across all definitions. This indicates that the spike in means can be attributed to few extreme outliers. 
 
