@@ -5,144 +5,53 @@ expectations:
 
 actions:
 
+  generate_event_counts:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_eventcounts --output-dir=output/data --output-format feather
+    outputs:
+      highly_sensitive:
+        cohort: output/data/input_eventcounts.feather
+
   generate_study_population:
     run: cohortextractor:latest generate_cohort --study-definition study_definition --output-dir=output/data --output-format feather
     outputs:
       highly_sensitive:
         cohort: output/data/input.feather
 
-  generate_study_population_derived_bmi:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_derived_bmi --output-dir=output/data --output-format feather
+  preprocess_inputs:
+    run: python:latest python analysis/preprocess_inputs.py --output-format feather
+    needs: [generate_study_population]
     outputs:
       highly_sensitive:
-        cohort: output/data/input_derived_bmi.feather
+        cohort_with_duration: output/data/input_processed.feather
 
-  generate_study_population_recorded_bmi:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_recorded_bmi --output-dir=output/data --output-format feather
-    outputs:
-      highly_sensitive:
-        cohort: output/data/input_recorded_bmi.feather
-
-  generate_study_population_snomed_hw:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_snomed_hw --output-dir=output/data --output-format feather
-    outputs:
-      highly_sensitive:
-        cohort: output/data/input_snomed_hw.feather
-
-  generate_study_population_ctv3_hw:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_ctv3_hw --output-dir=output/data --output-format feather
-    outputs:
-      highly_sensitive:
-        cohort: output/data/input_ctv3_hw.feather
-
-  preprocess_derived_bmi_input:
-    run: python:latest python analysis/preprocess_bmi_inputs.py "derived_bmi" --output-format feather
-    needs: [generate_study_population_derived_bmi]
-    outputs:
-      highly_sensitive:
-        cohort_with_duration: output/data/input_processed_derived_bmi.feather
-
-  preprocess_recorded_bmi_input:
-    run: python:latest python analysis/preprocess_bmi_inputs.py "recorded_bmi" --output-format feather
-    needs: [generate_study_population_recorded_bmi]
-    outputs:
-      highly_sensitive:
-        cohort_with_duration: output/data/input_processed_recorded_bmi.feather
-
-  preprocess_computed_bmi_input:
-    run: python:latest python analysis/preprocess_hw_inputs.py "height" "weight" "snomed" "computed_bmi" --output-format feather
-    needs: [generate_study_population_snomed_hw]
-    outputs:
-      highly_sensitive:
-        cohort_with_duration: output/data/input_processed_computed_bmi.feather
-
-  preprocess_backend_computed_bmi_input:
-    run: python:latest python analysis/preprocess_hw_inputs.py "height_backend" "weight_backend" "ctv3" "backend_computed_bmi" --output-format feather
-    needs: [generate_study_population_ctv3_hw]
-    outputs:
-      highly_sensitive:
-        cohort_with_duration: output/data/input_processed_backend_computed_bmi.feather
-
-  join_cohorts:
-    run: >
-      cohort-joiner:v0.0.35
-        --lhs output/data/input_processed*.feather
-        --rhs output/data/input.feather
-        --output-dir output/joined
-    needs: [generate_study_population, preprocess_derived_bmi_input, preprocess_recorded_bmi_input, preprocess_computed_bmi_input, preprocess_backend_computed_bmi_input]
-    outputs:
-      highly_sensitive:
-        cohort: output/joined/input_processed*.feather
-
-  preprocess_age_dates:
-    run: python:latest python analysis/preprocess_age_dates.py --output-format feather
-    needs: [join_cohorts]
-    outputs:
-      highly_sensitive:
-        cohort1: output/joined/input_processed_backend_computed_bmi.feather
-        cohort2: output/joined/input_processed_computed_bmi.feather
-        cohort3: output/joined/input_processed_derived_bmi.feather
-        cohort4: output/joined/input_processed_recorded_bmi.feather
-
-  execute_validation_analyses_derived_bmi:
-    run: python:latest python analysis/validation_script_single_definition.py "derived_bmi"
-    needs: [preprocess_age_dates]
+  execute_validation_analyses:
+    run: python:latest python analysis/validation_script.py
+    needs: [preprocess_inputs]
     outputs:
       moderately_sensitive: 
-        tables: output/validation/tables/derived_bmi/*.csv
-
-  execute_validation_analyses_recorded_bmi:
-    run: python:latest python analysis/validation_script_single_definition.py "recorded_bmi"
-    needs: [preprocess_age_dates]
-    outputs:
-      moderately_sensitive:
-        tables: output/validation/tables/recorded_bmi/*.csv
-
-  execute_validation_analyses_computed_bmi:
-    run: python:latest python analysis/validation_script_single_definition.py "computed_bmi"
-    needs: [preprocess_age_dates]
-    outputs:
-      moderately_sensitive: 
-        tables: output/validation/tables/computed_bmi/*.csv
-
-  execute_validation_analyses_backend_computed_bmi:
-    run: python:latest python analysis/validation_script_single_definition.py "backend_computed_bmi"
-    needs: [preprocess_age_dates]
-    outputs:
-      moderately_sensitive: 
-        tables: output/validation/tables/backend_computed_bmi/*.csv
-
-  execute_validation_analyses_high_computed_bmi:
-    run: python:latest python analysis/validation_script_high_bmi.py "computed_bmi"
-    needs: [preprocess_age_dates]
-    outputs:
-      moderately_sensitive: 
-        tables: output/validation/tables/high_computed_bmi/*.csv
+        tables: output/phenotype_validation_bmi/tables/*.csv
+        figures: output/phenotype_validation_bmi/figures/*.png
         
-  execute_validation_analyses_high_backend_computed_bmi:
-    run: python:latest python analysis/validation_script_high_bmi.py "backend_computed_bmi"
-    needs: [preprocess_age_dates]
-    outputs:
-      moderately_sensitive: 
-        tables: output/validation/tables/high_backend_computed_bmi/*.csv
-
-  execute_validation_analyses_all_definitions:
-    run: python:latest python analysis/validation_script_all_definitions.py
-    needs: [preprocess_age_dates]
-    outputs:
-      moderately_sensitive: 
-        tables: output/validation/tables/comparison/*.csv
-
-  consolidate_analyses:
-    run: python:latest python analysis/consolidate_analyses.py
-    needs: [execute_validation_analyses_derived_bmi, execute_validation_analyses_recorded_bmi, execute_validation_analyses_backend_computed_bmi, execute_validation_analyses_computed_bmi, execute_validation_analyses_high_backend_computed_bmi, execute_validation_analyses_high_computed_bmi]
-    outputs:
-      moderately_sensitive: 
-        tables: output/validation/formatted_tables/*.csv
-
-  generate_report_bmi_segmented:
-    run: python:latest jupyter nbconvert /workspace/notebooks/report_bmi_segmented.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
-    needs: [consolidate_analyses, execute_validation_analyses_computed_bmi, execute_validation_analyses_backend_computed_bmi, execute_validation_analyses_high_computed_bmi, execute_validation_analyses_high_backend_computed_bmi, execute_validation_analyses_recorded_bmi, execute_validation_analyses_derived_bmi]
+  generate_report_bmi:
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_bmi.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [execute_validation_analyses]
     outputs:
       moderately_sensitive:
-        notebook: output/report_bmi_segmented.html
+        notebook: output/report_bmi.html
+        
+  generate_report_eventcounts:
+    run: python:latest jupyter nbconvert /workspace/notebooks/report_event_counts.ipynb --execute --to html --template basic --output-dir=/workspace/output --ExecutePreprocessor.timeout=86400 --no-input
+    needs: [generate_event_counts]
+    outputs:
+      moderately_sensitive:
+        notebook: output/report_event_counts.html
+
+  generate_dataset_report:
+    run: >
+      dataset-report:v0.0.9
+        --input-files output/data/input.feather
+        --output-dir output/data
+    needs: [generate_study_population]
+    outputs:
+      moderately_sensitive:
+        dataset_report: output/data/input.html
