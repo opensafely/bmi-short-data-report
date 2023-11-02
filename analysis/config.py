@@ -1,5 +1,2 @@
-# study start date
-start_date = "2015-03-01"
-
-# study end date
-end_date = "today"
+# study index date
+index_date = "2022-05-01"
